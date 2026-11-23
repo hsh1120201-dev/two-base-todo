@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>兩基地待辦追蹤｜新竹社創基地 × 新竹青創基地</title>
+<link rel="icon" href="logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: an operations board. Top = today + counts, then filter chips, then a week-by-week timeline with a "today" line. Single bright look by choice to match the base's logo. */
+:root{
+  --paper:#FBF8F3; --card:#FFFFFF; --ink:#231815; --muted:#6F625C; --line:#E6DED4;
+  --sun:#F29600; --ember:#E85A1E; --sea:#1D7FD0; --deep:#0A6EBD;
+  --soft-sun:#FFF1DA; --soft-sea:#E4F0FB; --soft-mix:#EFE7F6; --mix:#6B3FA0;
+  --ok:#2E7D4F; --soft-ok:#E3F3E9; --bad:#C62828; --soft-bad:#FDE6E4;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --f-num:"Barlow Condensed","Arial Narrow",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{background:var(--paper);color:var(--ink)}
+body{font-family:var(--f-body);font-size:15px;line-height:1.55;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1080px;margin:0 auto;display:grid;gap:20px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 20px;border-bottom:2px solid var(--ink);padding-bottom:14px}
+header img{height:46px;width:auto}
+.ht{display:grid;gap:2px}
+.eyebrow{font-size:12px;letter-spacing:.14em;color:var(--muted);font-weight:500}
+h1{margin:0;font-size:clamp(22px,3vw,30px);font-weight:900;line-height:1.25;text-wrap:balance}
+.today{font-family:var(--f-num);font-size:20px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.today b{color:var(--ember);font-weight:700}
+
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:640px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;gap:2px;cursor:pointer;text-align:left;font:inherit;color:inherit}
+.stat:hover{border-color:var(--ink)}
+.stat .n{font-family:var(--f-num);font-size:38px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.stat .k{font-size:13px;color:var(--muted);font-weight:500}
+.stat.bad .n{color:var(--bad)} .stat.warn .n{color:var(--ember)} .stat.ok .n{color:var(--ok)}
+.stat[aria-pressed="true"]{border:2px solid var(--ink);padding:11px 13px}
+.prog{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:6px}
+.prog i{display:block;height:100%;background:var(--ok);width:0;transition:width .5s}
+
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip,button{font:inherit;font-size:14px;font-weight:700;border-radius:999px;border:2px solid var(--line);background:var(--card);color:var(--ink);padding:6px 14px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+button.primary{background:var(--ember);border-color:var(--ember);color:#fff}
+button.primary:hover{filter:brightness(1.05)}
+button:focus-visible,.chip:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.stat:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+input[type=search]{font:inherit;border:2px solid var(--line);border-radius:999px;padding:6px 14px;background:var(--card);color:var(--ink);min-width:0;width:200px;max-width:100%}
+
+.status{font-size:13px;color:var(--muted)}
+.status.err{color:var(--bad);font-weight:700}
+
+/* form */
+[hidden]{display:none!important}
+form{background:var(--card);border:2px solid var(--ink);border-radius:16px;padding:16px;display:grid;gap:12px}
+.grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.grid .full{grid-column:1/-1} .grid .half{grid-column:span 3} .grid .third{grid-column:span 2}
+@media (max-width:640px){.grid .half,.grid .third{grid-column:1/-1}}
+label{display:grid;gap:4px;font-size:13px;font-weight:700;color:var(--muted)}
+input,select,textarea{font:inherit;font-size:15px;font-weight:400;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0;width:100%}
+textarea{resize:vertical;min-height:60px}
+.passbox form{border-color:var(--sea)}
+.factions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+.factions .del{margin-right:auto;color:var(--bad);border-color:var(--soft-bad)}
+
+/* timeline */
+.weeks{display:grid;gap:18px}
+.week{display:grid;gap:8px}
+.wh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.wh h2{margin:0;font-size:16px;font-weight:900}
+.wh .r{font-family:var(--f-num);font-size:18px;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
+.wh .cur{font-size:12px;font-weight:700;background:var(--ember);color:#fff;border-radius:999px;padding:1px 9px;letter-spacing:.06em}
+.list{display:grid;gap:6px;list-style:none;margin:0;padding:0}
+.row{display:grid;grid-template-columns:28px 82px minmax(0,1fr) auto;gap:10px;align-items:start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;border-left-width:5px;transition:opacity .3s,background .3s}
+.row.b-s{border-left-color:var(--sun)} .row.b-y{border-left-color:var(--sea)} .row.b-m{border-left-color:var(--mix)}
+.row.over{background:var(--soft-bad)}
+.row.done{opacity:.55}
+.row.done .tt{text-decoration:line-through;text-decoration-color:var(--muted)}
+.row input[type=checkbox]{width:20px;height:20px;margin-top:2px;accent-color:var(--ok);cursor:pointer}
+.d{font-family:var(--f-num);font-size:18px;font-weight:600;line-height:1.2;font-variant-numeric:tabular-nums}
+.d small{display:block;font-size:13px;color:var(--muted);font-weight:500}
+.row.over .d{color:var(--bad)}
+.main{min-width:0;display:grid;gap:3px}
+.tt{font-weight:700;font-size:15px;line-height:1.45;overflow-wrap:anywhere}
+.tags{display:flex;flex-wrap:wrap;gap:4px 6px;font-size:12px}
+.pill{font-weight:700;border-radius:999px;padding:1px 8px;letter-spacing:.04em;white-space:nowrap}
+.p-s{background:var(--soft-sun);color:#9A4A00} .p-y{background:var(--soft-sea);color:var(--deep)} .p-m{background:var(--soft-mix);color:var(--mix)}
+.p-hi{background:var(--ember);color:#fff} .p-mid{background:var(--line);color:var(--ink)} .p-lo{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.p-over{background:var(--bad);color:#fff} .p-soon{background:var(--soft-sun);color:#9A4A00;border:1px solid var(--sun)}
+.kpi,.who{color:var(--muted)}
+.note{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.edit{font-size:13px;padding:4px 10px;border-width:1px}
+@media (max-width:560px){.row{grid-template-columns:24px minmax(0,1fr) auto}.row .d{grid-column:2;grid-row:1}.row .main{grid-column:2}.row .edit{grid-column:3;grid-row:1}}
+
+.todayline{display:flex;align-items:center;gap:8px;color:var(--ember);font-weight:700;font-size:13px;letter-spacing:.08em}
+.todayline::before,.todayline::after{content:"";flex:1;height:2px;background:var(--ember)}
+.empty{background:var(--card);border:2px dashed var(--line);border-radius:16px;padding:28px 20px;text-align:center;color:var(--muted);display:grid;gap:6px}
+.empty b{color:var(--ink);font-size:16px}
+footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<script src="config.js"></script>
+</body>
+</html>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="ht">
+      <img src="logo.svg" alt="新竹社創基地">
+    </div>
+    <div class="ht" style="text-align:right">
+      <span class="eyebrow">新竹社創基地 × 新竹青創基地｜115 年度</span>
+      <h1>兩基地待辦追蹤</h1>
+      <span class="today" id="today">—</span>
+    </div>
+  </header>
+
+  <div class="stats" id="stats">
+    <button class="stat bad" type="button" data-view="over"><span class="n" id="cOver">–</span><span class="k">已逾期</span></button>
+    <button class="stat warn" type="button" data-view="week"><span class="n" id="cWeek">–</span><span class="k">7 天內到期</span></button>
+    <button class="stat" type="button" data-view="open"><span class="n" id="cOpen">–</span><span class="k">未完成</span></button>
+    <button class="stat ok" type="button" data-view="all"><span class="n" id="cDone">–</span><span class="k" id="cDoneK">已完成</span><span class="prog"><i id="pDone"></i></span></button>
+  </div>
+
+  <div class="bar">
+    <div class="chips" id="baseChips" role="group" aria-label="基地篩選">
+      <button class="chip" type="button" data-base="" aria-pressed="true">全部</button>
+      <button class="chip" type="button" data-base="社創" aria-pressed="false">社創基地</button>
+      <button class="chip" type="button" data-base="青創" aria-pressed="false">青創基地</button>
+      <button class="chip" type="button" data-base="兩基地" aria-pressed="false">兩基地合辦</button>
+    </div>
+    <div class="chips">
+      <input type="search" id="q" placeholder="搜尋待辦、KPI、負責人" aria-label="搜尋">
+      <button class="primary" type="button" id="addBtn">＋ 新增待辦</button>
+    </div>
+  </div>
+  <div class="status" id="status">連線中…</div>
+
+  <div id="passBox" class="passbox" hidden>
+    <form id="passForm" class="passf">
+      <label>編輯密碼<input id="passIn" type="password" autocomplete="current-password" required></label>
+      <div class="factions"><span class="note" id="passMsg"></span><button type="button" id="passCancel">取消</button><button type="submit" class="primary" id="passOk">確認</button></div>
+    </form>
+  </div>
+  <form id="form" hidden>
+    <div class="grid">
+      <label class="full">待辦事項<input id="fTitle" required maxlength="200" placeholder="例如：第 2 次基地營運顧問會議"></label>
+      <label class="third">基地<select id="fBase"><option>社創</option><option>青創</option><option>兩基地</option></select></label>
+      <label class="third">開始日（可空白）<input id="fStart" type="date"></label>
+      <label class="third">截止日<input id="fDue" type="date" required></label>
+      <label class="third">優先<select id="fPri"><option>高</option><option selected>中</option><option>低</option></select></label>
+      <label class="third">對應 KPI<input id="fKpi" maxlength="80" placeholder="例如：顧問會議 2/2"></label>
+      <label class="third">負責人<input id="fOwner" maxlength="40" placeholder="例如：H"></label>
+      <label class="full">備註<textarea id="fNote" maxlength="1000"></textarea></label>
+    </div>
+    <div class="factions">
+      <button type="button" class="del" id="fDel" hidden>刪除這筆</button>
+      <button type="button" id="fCancel">取消</button>
+      <button type="submit" class="primary" id="fSave">儲存</button>
+    </div>
+  </form>
+
+  <div class="weeks" id="weeks">
+    <div class="empty"><b>正在載入待辦…</b><span>資料存在 Google 試算表。</span></div>
+  </div>
+
+  <footer>
+    <span>勾選即完成、點「編輯」可改日期與負責人；資料存在 Google 試算表，每 30 秒自動更新。</span>
+    <span>社創基地 03-5593142 分機 3529</span>
+  </footer>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const WD=["日","一","二","三","四","五","六"];
+const BASECLS={"社創":"s","青創":"y","兩基地":"m"};
+const BASELBL={"社創":"社創基地","青創":"青創基地","兩基地":"兩基地"};
+const PRICLS={"高":"hi","中":"mid","低":"lo"};
+let tasks=[], canWrite=true, editing=null;
+let filter={base:"",view:"open",q:""};
+
+function todayISO(){
+  const p=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Taipei",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+  return p; // YYYY-MM-DD
+}
+const parse=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(Date.UTC(y,m-1,d))};
+const iso=d=>d.toISOString().slice(0,10);
+const addDays=(s,n)=>{const d=parse(s);d.setUTCDate(d.getUTCDate()+n);return iso(d)};
+const md=s=>{const d=parse(s);return `${d.getUTCMonth()+1}/${d.getUTCDate()}`};
+const wd=s=>WD[parse(s).getUTCDay()];
+const monday=s=>{const d=parse(s);const k=(d.getUTCDay()+6)%7;d.setUTCDate(d.getUTCDate()-k);return iso(d)};
+const diff=(a,b)=>Math.round((parse(a)-parse(b))/864e5);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function render(){
+  const T=todayISO();
+  $("today").innerHTML=`今天 <b>${md(T)}（${wd(T)}）</b>`;
+  const inBase=t=>!filter.base||t.base===filter.base;
+  const base=tasks.filter(inBase);
+  const over=base.filter(t=>!t.done&&t.due<T);
+  const week=base.filter(t=>!t.done&&t.due>=T&&t.due<=addDays(T,7));
+  const open=base.filter(t=>!t.done);
+  const done=base.filter(t=>t.done);
+  $("cOver").textContent=over.length;$("cWeek").textContent=week.length;$("cOpen").textContent=open.length;
+  $("cDone").textContent=done.length;$("cDoneK").textContent=`已完成／共 ${base.length} 項（看全部）`;
+  $("pDone").style.width=base.length?(done.length/base.length*100)+"%":"0";
+  document.querySelectorAll("#stats .stat").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.view===filter.view)));
+
+  let list=base;
+  if(filter.view==="over") list=over; else if(filter.view==="week") list=week; else if(filter.view==="open") list=open;
+  const q=filter.q.trim().toLowerCase();
+  if(q) list=list.filter(t=>[t.title,t.kpi,t.owner,t.note].some(x=>String(x||"").toLowerCase().includes(q)));
+  list=[...list].sort((a,b)=>a.due.localeCompare(b.due)||(a.start||a.due).localeCompare(b.start||b.due)||String(a.title).localeCompare(String(b.title)));
+
+  const W=$("weeks");
+  if(!tasks.length){W.innerHTML=`<div class="empty"><b>還沒有待辦</b><span>按「＋ 新增待辦」加入第一筆，選擇社創、青創或兩基地合辦。</span></div>`;return}
+  if(!list.length){W.innerHTML=`<div class="empty"><b>這個篩選下沒有待辦</b><span>${filter.view==="over"?"沒有逾期的事項。":"換個基地或點「已完成」看全部。"}</span></div>`;return}
+
+  const groups=new Map();
+  list.forEach(t=>{const k=monday(t.due);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(t)});
+  const thisMon=monday(T);let html="",lineDone=false;
+  for(const [mon,items] of groups){
+    const sun=addDays(mon,6);
+    html+=`<section class="week"><div class="wh"><h2>${mon===thisMon?"本週":(mon<thisMon?"之前":(diff(mon,thisMon)===7?"下週":""))}</h2><span class="r">${md(mon)} – ${md(sun)}</span>${mon===thisMon?'<span class="cur">TODAY</span>':""}</div><ul class="list">`;
+    for(const t of items){
+      if(!lineDone&&mon===thisMon&&t.due>=T){html+=`<li class="todayline">今天 ${md(T)}</li>`;lineDone=true}
+      const isOver=!t.done&&t.due<T, d=diff(t.due,T);
+      const soon=!t.done&&d>=0&&d<=3;
+      const range=t.start&&t.start!==t.due?`<small>${md(t.start)} 起</small>`:`<small>（${wd(t.due)}）</small>`;
+      html+=`<li class="row b-${BASECLS[t.base]||"s"}${isOver?" over":""}${t.done?" done":""}">
+        <input type="checkbox" data-id="${esc(t.id)}" ${t.done?"checked":""} ${canWrite?"":"disabled"} aria-label="完成：${esc(t.title)}">
+        <div class="d">${md(t.due)}${range}</div>
+        <div class="main"><div class="tt">${esc(t.title)}</div>
+          <div class="tags"><span class="pill p-${BASECLS[t.base]||"s"}">${esc(BASELBL[t.base]||t.base)}</span>
+          ${t.priority?`<span class="pill p-${PRICLS[t.priority]||"mid"}">${esc(t.priority)}</span>`:""}
+          ${isOver?`<span class="pill p-over">逾期 ${-d} 天</span>`:""}${soon?`<span class="pill p-soon">${d===0?"今天到期":d+" 天後到期"}</span>`:""}
+          ${t.kpi?`<span class="kpi">KPI：${esc(t.kpi)}</span>`:""}${t.owner?`<span class="who">負責：${esc(t.owner)}</span>`:""}</div>
+          ${t.note?`<div class="note">${esc(t.note)}</div>`:""}</div>
+        ${canWrite?`<button type="button" class="edit" data-edit="${esc(t.id)}">編輯</button>`:"<span></span>"}
+      </li>`;
+    }
+    html+=`</ul></section>`;
+    if(!lineDone&&mon<thisMon){const nextKeys=[...groups.keys()];const idx=nextKeys.indexOf(mon);if(!nextKeys[idx+1]||nextKeys[idx+1]>thisMon){html+=`<div class="todayline">今天 ${md(T)}</div>`;lineDone=true}}
+  }
+  W.innerHTML=html;
+}
+
+function setStatus(msg,err){const s=$("status");s.textContent=msg;s.classList.toggle("err",!!err)}
+
+/* filters */
+$("baseChips").addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;filter.base=b.dataset.base;document.querySelectorAll("#baseChips .chip").forEach(c=>c.setAttribute("aria-pressed",String(c===b)));render()});
+$("stats").addEventListener("click",e=>{const b=e.target.closest(".stat");if(!b)return;filter.view=b.dataset.view;render()});
+$("q").addEventListener("input",e=>{filter.q=e.target.value;render()});
+
+/* API (Google Apps Script) */
+const API=window.TODO_API_URL||"";
+const configured=/^https:\/\/script\.google\.com\/.+\/exec$/.test(API);
+const PASS_KEY="two-base-todo-pass";
+const getPass=()=>{try{return localStorage.getItem(PASS_KEY)||""}catch(e){return ""}};
+const setPass=v=>{try{v?localStorage.setItem(PASS_KEY,v):localStorage.removeItem(PASS_KEY)}catch(e){}};
+async function api(body){
+  const r=await fetch(API,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({...body,pass:getPass()})});
+  const j=await r.json();
+  if(!j.ok){const e=new Error(j.error||"error");e.code=j.error;throw e}
+  return j;
+}
+async function write(body){
+  try{return await api(body)}
+  catch(err){
+    if(err.code!=="need_pass") throw err;
+    const ok=await askPass(); if(!ok) throw err;
+    return await api(body);
+  }
+}
+function askPass(){
+  return new Promise(res=>{
+    const box=$("passBox");box.hidden=false;$("passIn").value="";$("passIn").focus();$("passMsg").textContent="";
+    const done=v=>{box.hidden=true;$("passOk").onclick=null;$("passCancel").onclick=null;$("passForm").onsubmit=null;res(v)};
+    $("passCancel").onclick=()=>done(false);
+    $("passForm").onsubmit=async e=>{e.preventDefault();setPass($("passIn").value.trim());
+      try{await api({action:"checkPass"});done(true)}catch(err){setPass("");$("passMsg").textContent=err.code==="need_pass"?"密碼不對，請再試一次。":"連線失敗，請稍後再試。"}};
+  });
+}
+let loading=false;
+async function load(quiet){
+  if(!configured||loading)return; loading=true;
+  try{const j=await api({action:"list"});tasks=(j.tasks||[]).filter(t=>t.title&&t.due);
+    setStatus(`已同步・${new Date().toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",hour12:false,timeZone:"Asia/Taipei"})} 更新，每 30 秒自動更新`);render()}
+  catch(err){if(!quiet||!tasks.length)setStatus("讀取失敗，請確認網路或稍後再試。",true)}
+  finally{loading=false}
+}
+function upsertLocal(t){const i=tasks.findIndex(x=>x.id===t.id);if(i>=0)tasks[i]=t;else tasks.push(t);render()}
+
+/* toggle done */
+$("weeks").addEventListener("change",async e=>{
+  const cb=e.target.closest("input[type=checkbox]");if(!cb)return;
+  const id=cb.dataset.id, done=cb.checked;
+  const t=tasks.find(x=>x.id===id); if(t){t.done=done;render()}
+  try{const j=await write({action:"save",task:{id,done}});upsertLocal(j.task)}
+  catch(err){if(t){t.done=!done;render()}handleWriteErr(err)}
+});
+$("weeks").addEventListener("click",e=>{const b=e.target.closest("[data-edit]");if(b)openForm(tasks.find(t=>t.id===b.dataset.edit))});
+
+/* form */
+function openForm(t){
+  editing=t||null;
+  $("fTitle").value=t?.title||"";$("fBase").value=t?.base||filter.base||"社創";$("fStart").value=t?.start||"";
+  $("fDue").value=t?.due||todayISO();$("fPri").value=t?.priority||"中";$("fKpi").value=t?.kpi||"";$("fOwner").value=t?.owner||"";$("fNote").value=t?.note||"";
+  $("fDel").hidden=!t;$("fSave").textContent=t?"儲存變更":"新增";
+  $("form").hidden=false;$("fTitle").focus();$("form").scrollIntoView({block:"nearest",behavior:"smooth"});
+}
+let delArmed=false;
+function closeForm(){$("form").hidden=true;editing=null;delArmed=false;$("fDel").textContent="刪除這筆"}
+$("addBtn").addEventListener("click",()=>openForm(null));
+$("fCancel").addEventListener("click",closeForm);
+$("fDel").addEventListener("click",async()=>{
+  if(!editing)return;
+  if(!delArmed){delArmed=true;$("fDel").textContent="再按一次確認刪除";return}
+  const id=editing.id;
+  try{await write({action:"delete",id});tasks=tasks.filter(t=>t.id!==id);render();setStatus("已刪除");closeForm()}catch(err){handleWriteErr(err)}
+});
+$("form").addEventListener("submit",async e=>{
+  e.preventDefault(); if(!configured){setStatus("尚未設定資料庫網址（config.js），目前無法儲存。",true);return}
+  const start=$("fStart").value, due=$("fDue").value;
+  if(start&&due&&start>due){setStatus("開始日不能晚於截止日",true);return}
+  const body={title:$("fTitle").value.trim(),base:$("fBase").value,start:start||"",due,priority:$("fPri").value,kpi:$("fKpi").value.trim(),owner:$("fOwner").value.trim(),note:$("fNote").value.trim()};
+  if(!body.title){setStatus("請填寫待辦事項",true);return}
+  if(editing) body.id=editing.id;
+  $("fSave").disabled=true;
+  try{const j=await write({action:"save",task:body});upsertLocal(j.task);setStatus(editing?"已更新":"已新增");closeForm()}
+  catch(err){handleWriteErr(err)}
+  finally{$("fSave").disabled=false}
+});
+function handleWriteErr(err){
+  if(err?.code==="need_pass") setStatus("需要編輯密碼才能修改。",true);
+  else setStatus("儲存失敗："+(err?.message&&err.message!=="error"?err.message:"請稍後再試一次。"),true);
+}
+
+/* start */
+render();
+if(!configured){
+  setStatus("尚未設定資料庫網址：請把 Apps Script 的 /exec 網址填進 config.js。",true);
+  $("weeks").innerHTML=`<div class="empty"><b>還沒連上 Google 試算表</b><span>依照 README 的步驟部署 apps-script.gs，再把網址填進 config.js。</span></div>`;
+} else {
+  $("weeks").innerHTML=`<div class="empty"><b>正在載入待辦…</b><span>資料存在 Google 試算表，打勾或新增後其他人重新整理或 30 秒內就會看到。</span></div>`;
+  load();
+  setInterval(()=>{if(document.visibilityState==="visible"&&$("form").hidden)load(true)},30000);
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")load(true)});
+}
+setInterval(render,60000);
+</script>
+</body>
+</html>
