@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>兩基地待辦｜電視牆</title>
+<link rel="icon" href="logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+/* 16:9 signage. Everything is sized in vw/vh so the same page fills a 1080p or 4K TV. Dark ground for a lobby screen; brand orange/blue as accents. */
+:root{
+  --bg:#14100E; --panel:#211B18; --line:#3A302B; --fg:#FBF5EE; --muted:#B5A89F;
+  --sun:#F29600; --ember:#E85A1E; --sea:#3B97E3; --mix:#A57BD6; --ok:#4CC38A; --bad:#FF5A4E;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --f-num:"Barlow Condensed","Arial Narrow",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:var(--f-body);overflow:hidden;cursor:none}
+body{display:grid;grid-template-rows:auto 1fr auto;height:100vh;padding:2.2vh 2.4vw 0;gap:2vh}
+header{display:flex;align-items:center;justify-content:space-between;gap:2vw}
+.brand{display:flex;align-items:center;gap:1.4vw}
+.brand .logo{background:#fff;border-radius:1vw;padding:.8vh 1vw;display:flex}
+.brand img{height:5.6vh;width:auto}
+.brand h1{margin:0;font-size:4.4vh;font-weight:900;letter-spacing:.04em}
+.brand h1 small{display:block;font-size:1.9vh;font-weight:500;color:var(--muted);letter-spacing:.14em}
+.clock{text-align:right;font-variant-numeric:tabular-nums}
+.clock .t{font-family:var(--f-num);font-weight:700;font-size:9vh;line-height:.9}
+.clock .t span{color:var(--sun);font-size:.5em;margin-left:.3vw}
+.clock .d{font-size:2.2vh;color:var(--muted);letter-spacing:.08em}
+
+main{display:grid;grid-template-columns:31vw 1fr;gap:2vw;min-height:0}
+.left{display:grid;grid-template-rows:auto 1fr;gap:2vh;min-height:0}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:1.4vh 1vw}
+.stat{background:var(--panel);border-radius:1.2vw;padding:1.6vh 1.2vw;display:grid;gap:.4vh}
+.stat .n{font-family:var(--f-num);font-weight:700;font-size:9vh;line-height:.95;font-variant-numeric:tabular-nums}
+.stat .k{font-size:2.2vh;color:var(--muted);font-weight:500}
+.stat.bad .n{color:var(--bad)} .stat.warn .n{color:var(--sun)} .stat.ok .n{color:var(--ok)}
+.bar{height:1vh;border-radius:1vh;background:var(--line);overflow:hidden;margin-top:.6vh}
+.bar i{display:block;height:100%;background:var(--ok);transition:width 1s}
+.focus{background:linear-gradient(160deg,var(--ember),#B8360B);border-radius:1.2vw;padding:2.4vh 1.6vw;display:flex;flex-direction:column;gap:1.2vh;min-height:0;overflow:hidden}
+.focus .lbl{font-size:2.2vh;font-weight:700;letter-spacing:.16em;opacity:.85}
+.focus .tt{font-size:4.2vh;font-weight:900;line-height:1.3;text-wrap:balance}
+.focus .meta{font-size:2.3vh;opacity:.9}
+.focus .cd{font-family:var(--f-num);font-weight:700;font-size:7vh;line-height:1;margin-top:auto}
+.focus.calm{background:linear-gradient(160deg,#1E5E99,#123C63)}
+
+.right{display:grid;grid-template-rows:auto 1fr auto;gap:1.4vh;min-height:0}
+.rh{display:flex;align-items:baseline;justify-content:space-between}
+.rh h2{margin:0;font-size:3.2vh;font-weight:900}
+.rh .pg{font-family:var(--f-num);font-size:2.6vh;color:var(--muted)}
+.list{list-style:none;margin:0;padding:0;display:grid;grid-auto-rows:min-content;gap:1.1vh;min-height:0;overflow:hidden}
+.row{display:grid;grid-template-columns:9vw 1fr auto;gap:1.2vw;align-items:center;background:var(--panel);border-radius:1vw;padding:1.3vh 1.2vw;border-left:.5vw solid var(--sun);animation:in .6s both}
+.row.b-y{border-left-color:var(--sea)} .row.b-m{border-left-color:var(--mix)}
+.row.over{background:#3A1714}
+.row .d{font-family:var(--f-num);font-weight:700;font-size:4.2vh;line-height:1;font-variant-numeric:tabular-nums}
+.row .d small{display:block;font-size:2vh;color:var(--muted);font-weight:500;margin-top:.3vh}
+.row.over .d{color:var(--bad)}
+.row .tt{font-size:2.9vh;font-weight:700;line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.row .sub{font-size:1.9vh;color:var(--muted);margin-top:.3vh}
+.pill{font-size:2vh;font-weight:700;border-radius:99vh;padding:.4vh 1vw;white-space:nowrap}
+.p-over{background:var(--bad);color:#fff} .p-today{background:var(--sun);color:#1a0f00} .p-soon{border:2px solid var(--sun);color:var(--sun)} .p-later{color:var(--muted);border:2px solid var(--line)}
+.dots{display:flex;gap:.6vw;justify-content:center}
+.dots i{width:1vh;height:1vh;border-radius:50%;background:var(--line)} .dots i.on{background:var(--fg)}
+.empty{display:grid;place-items:center;text-align:center;color:var(--muted);font-size:3vh;gap:1vh}
+.empty b{color:var(--fg);font-size:4vh}
+@keyframes in{from{opacity:0;transform:translateY(1.5vh)}to{opacity:1;transform:none}}
+
+footer{height:6vh;display:flex;align-items:center;border-top:1px solid var(--line);overflow:hidden;white-space:nowrap;font-size:2.4vh;color:var(--muted)}
+.tick{display:inline-block;padding-left:100%;animation:tick linear infinite}
+.tick b{color:var(--fg);margin:0 .4vw}.tick em{font-style:normal;color:var(--sun);margin:0 2vw}
+@keyframes tick{to{transform:translateX(-100%)}}
+.live{flex:none;display:flex;align-items:center;gap:.6vw;padding-right:1.5vw;margin-right:1.5vw;border-right:1px solid var(--line);color:var(--fg);font-weight:700;background:var(--bg);position:relative;z-index:1}
+.live i{width:1.2vh;height:1.2vh;border-radius:50%;background:var(--ok);animation:pulse 1.6s infinite}
+.live.err i{background:var(--bad);animation:none}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(76,195,138,.6)}70%{box-shadow:0 0 0 1vh rgba(76,195,138,0)}100%{box-shadow:0 0 0 0 rgba(76,195,138,0)}}
+.tickwrap{flex:1;overflow:hidden}
+
+/* push toast */
+.toasts{position:fixed;right:2.4vw;top:14vh;display:grid;gap:1.4vh;width:38vw;z-index:9}
+.toast{background:#fff;color:#231815;border-radius:1.2vw;padding:2vh 1.6vw;box-shadow:0 2vh 6vh rgba(0,0,0,.5);display:grid;gap:.6vh;border-left:1vw solid var(--sun);animation:tin .7s cubic-bezier(.2,1.3,.4,1) both}
+.toast.ok{border-left-color:var(--ok)} .toast.new{border-left-color:var(--ember)} .toast.chg{border-left-color:var(--sea)}
+.toast .k{font-size:2.1vh;font-weight:900;letter-spacing:.14em;color:#6F625C}
+.toast .tt{font-size:3.3vh;font-weight:900;line-height:1.3}
+.toast .m{font-size:2.1vh;color:#6F625C}
+.toast.out{animation:tout .5s both}
+@keyframes tin{from{opacity:0;transform:translateX(50vw)}to{opacity:1;transform:none}}
+@keyframes tout{to{opacity:0;transform:translateX(50vw)}}
+.setup{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);font-size:3vh;text-align:center;color:var(--muted);z-index:10}
+.setup b{display:block;color:var(--fg);font-size:4vh;margin-bottom:1vh}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo"><img src="logo.svg" alt="新竹社創基地"></div>
+    <h1><small>新竹社創基地 × 新竹青創基地</small><span id="ttl">兩基地待辦</span></h1>
+  </div>
+  <div class="clock"><div class="t"><span id="hm" style="all:unset">--:--</span><span id="ss">--</span></div><div class="d" id="date">—</div></div>
+</header>
+
+<main>
+  <section class="left">
+    <div class="stats">
+      <div class="stat bad"><span class="n" id="cOver">–</span><span class="k">已逾期</span></div>
+      <div class="stat warn"><span class="n" id="cToday">–</span><span class="k">今天到期</span></div>
+      <div class="stat"><span class="n" id="cWeek">–</span><span class="k">7 天內到期</span></div>
+      <div class="stat ok"><span class="n" id="cPct">–</span><span class="k" id="cPctK">完成率</span><div class="bar"><i id="pBar" style="width:0"></i></div></div>
+    </div>
+    <div class="focus" id="focus">
+      <span class="lbl">下一個截止</span>
+      <div class="tt" id="fTitle">載入中…</div>
+      <div class="meta" id="fMeta"></div>
+      <div class="cd" id="fCd"></div>
+    </div>
+  </section>
+
+  <section class="right">
+    <div class="rh"><h2 id="listTitle">逾期與接下來 14 天</h2><span class="pg" id="pg"></span></div>
+    <ul class="list" id="list"></ul>
+    <div class="dots" id="dots"></div>
+  </section>
+</main>
+
+<footer>
+  <div class="live" id="live"><i></i><span id="liveT">連線中</span></div>
+  <div class="tickwrap"><span class="tick" id="tick"></span></div>
+</footer>
+<div class="toasts" id="toasts"></div>
+
+<script>
+const API=window.TODO_API_URL||"";
+const params=new URLSearchParams(location.search);
+const BASE=params.get("base")||"";               // ?base=社創 / 青創 / 兩基地
+const POLL=Math.max(10,+params.get("poll")||15)*1000;  // 幾秒抓一次
+const PAGE_MS=Math.max(5,+params.get("page")||12)*1000; // 每頁停留秒數
+const PER=Math.max(3,+params.get("rows")||6);
+const $=id=>document.getElementById(id);
+const WD=["日","一","二","三","四","五","六"];
+const BCLS={"社創":"s","青創":"y","兩基地":"m"}, BLBL={"社創":"社創基地","青創":"青創基地","兩基地":"兩基地"};
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad=n=>String(n).padStart(2,"0");
+function tpe(){const p=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Taipei",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23",weekday:"short"}).formatToParts(new Date());const g=t=>p.find(x=>x.type===t).value;return{date:`${g("year")}-${g("month")}-${g("day")}`,h:g("hour"),m:g("minute"),s:g("second"),wd:{Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6}[g("weekday")]}}
+const parse=s=>{const[y,m,d]=s.split("-").map(Number);return new Date(Date.UTC(y,m-1,d))};
+const diff=(a,b)=>Math.round((parse(a)-parse(b))/864e5);
+const md=s=>{const d=parse(s);return `${d.getUTCMonth()+1}/${d.getUTCDate()}`};
+const wdOf=s=>WD[parse(s).getUTCDay()];
+
+if(BASE) $("ttl").textContent=(BLBL[BASE]||BASE)+"待辦";
+let tasks=null, page=0, pages=[[]];
+
+function tickClock(){const n=tpe();$("hm").textContent=`${n.h}:${n.m}`;$("ss").textContent=n.s;$("date").textContent=`${n.date.replace(/-/g,"/")}（${WD[n.wd]}）`}
+setInterval(tickClock,1000);tickClock();
+
+function build(){
+  if(!tasks)return;
+  const T=tpe().date;
+  const all=tasks.filter(t=>!BASE||t.base===BASE);
+  const open=all.filter(t=>!t.done);
+  const over=open.filter(t=>t.due<T), today=open.filter(t=>t.due===T), week=open.filter(t=>t.due>=T&&diff(t.due,T)<=7);
+  $("cOver").textContent=over.length;$("cToday").textContent=today.length;$("cWeek").textContent=week.length;
+  const pct=all.length?Math.round((all.length-open.length)/all.length*100):0;
+  $("cPct").textContent=pct+"%";$("cPctK").textContent=`完成率（${all.length-open.length}/${all.length}）`;$("pBar").style.width=pct+"%";
+
+  const nxt=open.filter(t=>t.due>=T).sort((a,b)=>a.due.localeCompare(b.due))[0];
+  const f=$("focus");
+  if(nxt){const d=diff(nxt.due,T);f.classList.toggle("calm",d>3);
+    $("fTitle").textContent=nxt.title;$("fMeta").textContent=`${BLBL[nxt.base]||nxt.base}${nxt.owner?"・負責 "+nxt.owner:""}${nxt.kpi?"・"+nxt.kpi:""}`;
+    $("fCd").textContent=d===0?"今天截止":`${md(nxt.due)}（${wdOf(nxt.due)}）・剩 ${d} 天`;}
+  else{f.classList.add("calm");$("fTitle").textContent="目前沒有待辦";$("fMeta").textContent="";$("fCd").textContent=""}
+
+  const show=open.filter(t=>t.due<T||diff(t.due,T)<=14).sort((a,b)=>a.due.localeCompare(b.due)||(a.priority==="高"?-1:1));
+  pages=[];for(let i=0;i<show.length;i+=PER)pages.push(show.slice(i,i+PER));if(!pages.length)pages=[[]];
+  if(page>=pages.length)page=0;
+  renderPage();
+
+  const later=open.filter(t=>diff(t.due,T)>=0).sort((a,b)=>a.due.localeCompare(b.due)).slice(0,12);
+  const txt=later.map(t=>`<b>${md(t.due)}</b>${esc(t.title)}`).join("<em>●</em>")+"<em>●</em>聯絡電話 03-5593142 分機 3529";
+  const tk=$("tick");if(tk.dataset.k!==txt){tk.dataset.k=txt;tk.innerHTML=txt;tk.style.animationDuration=Math.max(30,tk.textContent.length*0.35)+"s"}
+}
+function renderPage(){
+  const T=tpe().date, items=pages[page]||[];
+  $("pg").textContent=pages.length>1?`${page+1} / ${pages.length}`:"";
+  $("dots").innerHTML=pages.length>1?pages.map((_,i)=>`<i class="${i===page?"on":""}"></i>`).join(""):"";
+  if(!items.length){$("list").dataset.k="";$("list").innerHTML=`<li class="empty"><b>近期沒有待辦</b>14 天內沒有要截止的事項</li>`;return}
+  const html=items.map((t,i)=>{const d=diff(t.due,T);
+    const pill=d<0?`<span class="pill p-over">逾期 ${-d} 天</span>`:d===0?`<span class="pill p-today">今天</span>`:d<=3?`<span class="pill p-soon">${d} 天後</span>`:`<span class="pill p-later">${d} 天後</span>`;
+    return `<li class="row b-${BCLS[t.base]||"s"}${d<0?" over":""}" style="animation-delay:${i*80}ms"><div class="d">${md(t.due)}<small>（${wdOf(t.due)}）</small></div><div><div class="tt">${esc(t.title)}</div><div class="sub">${esc(BLBL[t.base]||t.base)}${t.owner?"・負責 "+esc(t.owner):""}${t.kpi?"・"+esc(t.kpi):""}</div></div>${pill}</li>`}).join("");
+  if($("list").dataset.k!==html){$("list").dataset.k=html;$("list").innerHTML=html}
+}
+setInterval(()=>{if(pages.length>1){page=(page+1)%pages.length;renderPage()}},PAGE_MS);
+setInterval(build,60000);
+
+/* push: compare snapshots */
+const queue=[];let showing=0;
+function toast(kind,label,title,meta){queue.push({kind,label,title,meta});pump()}
+function pump(){
+  while(showing<3&&queue.length){const q=queue.shift();showing++;
+    const el=document.createElement("div");el.className="toast "+q.kind;
+    el.innerHTML=`<span class="k">${esc(q.label)}</span><span class="tt">${esc(q.title)}</span><span class="m">${esc(q.meta)}</span>`;
+    $("toasts").appendChild(el);
+    setTimeout(()=>{el.classList.add("out");setTimeout(()=>{el.remove();showing--;pump()},500)},9000);}
+}
+function diffPush(prev,next){
+  const P=new Map(prev.map(t=>[t.id,t]));const N=new Map(next.map(t=>[t.id,t]));
+  for(const t of next){if(BASE&&t.base!==BASE)continue;const o=P.get(t.id);const meta=`${BLBL[t.base]||t.base}・截止 ${md(t.due)}（${wdOf(t.due)}）${t.owner?"・"+t.owner:""}`;
+    if(!o) toast("new","新增待辦",t.title,meta);
+    else if(!o.done&&t.done) toast("ok","✓ 已完成",t.title,`${BLBL[t.base]||t.base}${t.owner?"・"+t.owner:""}`);
+    else if(o.done&&!t.done) toast("chg","重新開啟",t.title,meta);
+    else if(o.due!==t.due) toast("chg","改期",t.title,`${md(o.due)} → ${md(t.due)}`);
+    else if(o.title!==t.title||o.owner!==t.owner) toast("chg","已更新",t.title,meta);}
+  for(const o of prev){if(BASE&&o.base!==BASE)continue;if(!N.has(o.id))toast("chg","已移除",o.title,"")}
+}
+
+let busy=false;
+async function load(){
+  if(busy)return;busy=true;
+  try{
+    const r=await fetch(API,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"list"})});
+    const j=await r.json();if(!j.ok)throw new Error(j.error);
+    const next=(j.tasks||[]).filter(t=>t.title&&t.due);
+    if(tasks)diffPush(tasks,next);
+    tasks=next;build();
+    $("live").classList.remove("err");$("liveT").textContent="即時同步";
+  }catch(e){$("live").classList.add("err");$("liveT").textContent="連線中斷，重試中"}
+  finally{busy=false}
+}
+if(!/^https:\/\/script\.google\.com\/.+\/exec$/.test(API)){
+  document.body.insertAdjacentHTML("beforeend",`<div class="setup"><div><b>尚未設定資料來源</b>請把 Apps Script 的 /exec 網址填進 config.js</div></div>`);
+}else{load();setInterval(load,POLL)}
+try{navigator.wakeLock&&navigator.wakeLock.request("screen").catch(()=>{})}catch(e){}
+document.addEventListener("click",()=>{try{document.fullscreenElement||document.documentElement.requestFullscreen().catch(()=>{})}catch(e){}});
+setTimeout(()=>location.reload(),6*3600*1000); // 每 6 小時重新整理，避免長時間掛著卡住
+</script>
+</body>
+</html>
