@@ -106,7 +106,7 @@ html.embed header{display:none}
       <button class="chip" type="button" data-base="社創" aria-pressed="false">社創基地</button>
     </div>
     <div class="chips">
-      <label style="display:flex;gap:6px;align-items:center;font-size:13px">每張圖<select id="perImg" style="font:inherit;border:2px solid var(--line);border-radius:999px;padding:5px 10px;background:var(--card)"><option value="0">全部一張</option><option value="6">6 列</option><option value="7">7 列</option><option value="8" selected>8 列</option><option value="10">10 列</option></select></label>
+      <label style="display:flex;gap:6px;align-items:center;font-size:13px">每張圖<select id="perImg" style="font:inherit;border:2px solid var(--line);border-radius:999px;padding:5px 10px;background:var(--card)"><option value="0">全部一張</option><option value="6">6 列</option><option value="7">7 列</option><option value="8" selected>8 列</option><option value="9">9 列</option><option value="10">10 列</option></select></label>
       <button class="dl" type="button" id="pngBtn">下載圖片 PNG</button>
       <button class="dl" type="button" id="xlsxBtn">下載 Excel</button>
     </div>
@@ -126,7 +126,7 @@ html.embed header{display:none}
   <form id="form" hidden>
     <div class="grid">
       <label class="one">序號<input id="fSeq" type="number" min="0" step="1" required></label>
-      <label class="half">重點執行項目<input id="fItem" maxlength="60" required placeholder="例如：業師輔導"></label>
+      <label class="half">重點執行項目<textarea id="fItem" maxlength="60" required rows="1" style="min-height:42px" placeholder="例如：業師輔導（要換行就按 Enter）"></textarea></label>
       <label class="one">年度目標<input id="fTarget" maxlength="40" placeholder="30次"></label>
       <label class="one">達成率<input id="fRate" maxlength="20" placeholder="73%"></label>
       <label class="full">備註說明<textarea id="fNote" maxlength="2000"></textarea></label>
@@ -150,6 +150,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const LOGO={"青創":"img/logo-qc.png","社創":"img/logo-sc.png"};
 const NAME={"青創":"青創基地","社創":"社創基地"};
+const HEAD={"青創":"#0BA5C3","社創":"#F39800"};
 let items=[], editing=null;
 let base=(()=>{const u=new URLSearchParams(location.search).get("base");if(u==="社創"||u==="青創")return u;try{return localStorage.getItem("kpi-base")||"青創"}catch(e){return "青創"}})();
 
@@ -165,14 +166,15 @@ function runs(text,f={}){
 }
 const noteHTML=s=>runs(String(s||"")).map(r=>{let h=esc(r.t).replace(/\n/g,"<br>");if(r.u)h=`<u>${h}</u>`;if(r.b)h=`<b>${h}</b>`;if(r.r)h=`<span style="color:#E0161B">${h}</span>`;return h}).join("");
 const rateTxt=s=>{s=String(s||"").trim();return /^\d+(\.\d+)?$/.test(s)?s+"%":s};
-const rateNum=s=>{const m=String(s||"").match(/(\d+(\.\d+)?)\s*%/);return m?Number(m[1]):null};
+const plain=s=>String(s||"").replace(/\*\*|__|!!/g,"");
+const rateNum=s=>{const m=plain(s).match(/(\d+(\.\d+)?)\s*%/);return m?Number(m[1]):null};
 const mine=()=>items.filter(t=>t.base===base).sort((a,b)=>a.seq-b.seq||String(a.item).localeCompare(String(b.item)));
 
 function sheetHTML(b,list,off=0){
-  return `<div class="sheet"><img class="lg" src="${LOGO[b]}" alt="${esc(NAME[b])}">
+  return `<div class="sheet" style="--k-head:${HEAD[b]}"><img class="lg" src="${LOGO[b]}" alt="${esc(NAME[b])}">
   <table><colgroup><col style="width:70px"><col style="width:330px"><col style="width:180px"><col style="width:150px"><col></colgroup>
   <thead><tr><th></th><th>重點執行項目</th><th>年度目標</th><th>達成率</th><th>備註說明</th></tr></thead>
-  <tbody>${list.map((t,i)=>`<tr data-id="${esc(t.id)}"><td class="no">${off+i+1}</td><td class="it">${esc(t.item)}</td><td class="tg">${esc(t.target)}</td><td class="rt">${esc(rateTxt(t.rate))}</td><td class="nt">${noteHTML(t.note)}</td></tr>`).join("")}</tbody></table></div>`;
+  <tbody>${list.map((t,i)=>`<tr data-id="${esc(t.id)}"><td class="no">${off+i+1}</td><td class="it">${esc(t.item).replace(/\n/g,"<br>")}</td><td class="tg">${esc(t.target)}</td><td class="rt">${noteHTML(rateTxt(t.rate))}</td><td class="nt">${noteHTML(t.note)}</td></tr>`).join("")}</tbody></table></div>`;
 }
 
 function fit(){const box=$("pvin"),pv=box.parentElement;const sh=box.firstElementChild;if(!sh)return;
@@ -187,7 +189,7 @@ function render(){
   fit();
   $("listTitle").textContent=`${NAME[base]}・${list.length} 個項目`;
   $("list").innerHTML=list.length?list.map((t,i)=>{const n=rateNum(rateTxt(t.rate));
-    return `<li class="row"><span class="n">${i+1}</span><div><div class="t">${esc(t.item)}　<span class="r${n!==null&&n<100?" low":""}">${esc(rateTxt(t.rate))}</span></div><div class="m">目標 ${esc(t.target)}｜${esc(String(t.note||"").replace(/\*\*|__|!!/g,"").slice(0,80))}</div></div><button type="button" class="edit" data-edit="${esc(t.id)}">編輯</button></li>`}).join("")
+    return `<li class="row"><span class="n">${i+1}</span><div><div class="t">${esc(plain(t.item).replace(/\n/g," "))}　<span class="r${n!==null&&n<100?" low":""}">${esc(plain(rateTxt(t.rate)))}</span></div><div class="m">目標 ${esc(t.target)}｜${esc(String(t.note||"").replace(/\*\*|__|!!/g,"").slice(0,80))}</div></div><button type="button" class="edit" data-edit="${esc(t.id)}">編輯</button></li>`}).join("")
     :`<li class="row"><span></span><div class="m">還沒有項目，按「＋ 新增項目」。</div><span></span></li>`;
 }
 
@@ -268,19 +270,19 @@ $("pngBtn").addEventListener("click",async()=>{
   const btn=$("pngBtn");btn.disabled=true;setStatus("產生圖片中…");
   try{
     await loadScript("lib/html2canvas.min.js");
-    const all=mine(), per=Number($("perImg").value)||all.length||1;
+    const B=base, all=mine(), per=Number($("perImg").value)||all.length||1;
     try{localStorage.setItem("kpi-per",$("perImg").value)}catch(e){}
     const parts=[];for(let i=0;i<Math.max(all.length,1);i+=per)parts.push([i,all.slice(i,i+per)]);
     for(let k=0;k<parts.length;k++){
       const [off,list]=parts[k];
-      const host=document.createElement("div");host.style.cssText="position:fixed;left:-20000px;top:0;";host.innerHTML=sheetHTML(base,list,off);document.body.appendChild(host);
+      const host=document.createElement("div");host.style.cssText="position:fixed;left:-20000px;top:0;";host.innerHTML=sheetHTML(B,list,off);document.body.appendChild(host);
       await Promise.all([...host.querySelectorAll("img")].map(im=>im.complete?0:new Promise(r=>{im.onload=im.onerror=r})));
       if(document.fonts)await document.fonts.ready;
       const cv=await html2canvas(host.firstElementChild,{scale:1.5,backgroundColor:"#ffffff",logging:false});
       host.remove();
       const blob=await new Promise(r=>cv.toBlob(r,"image/png"));
       const tag=parts.length>1?`_${off+1}-${off+list.length}`:"";
-      save(blob,`${NAME[base]}_KPI達成表_${stamp()}${tag}.png`);
+      save(blob,`${NAME[B]}_KPI達成表_${stamp()}${tag}.png`);
       if(k<parts.length-1)await new Promise(r=>setTimeout(r,400));
     }
     setStatus(parts.length>1?`已下載 ${parts.length} 張圖片`:"圖片已下載");
@@ -302,18 +304,19 @@ $("xlsxBtn").addEventListener("click",async()=>{
       ws.getRow(1).height=30;ws.getRow(2).height=30;ws.getRow(3).height=10;
       const h=64;ws.addImage(id,{tl:{col:0.1,row:0.15},ext:{width:Math.round(h*iw/ih),height:h}});
       const hr=ws.getRow(4);hr.values=["","重點執行項目","年度目標","達成率","備註說明"];hr.height=30;
-      hr.eachCell({includeEmpty:true},c=>{c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF0BA5C3"}};c.font={name:FONT,size:14,bold:true,color:{argb:"FFFFFFFF"}};c.alignment={horizontal:"center",vertical:"middle"};c.border={top:white,bottom:white,left:white,right:white}});
+      hr.eachCell({includeEmpty:true},c=>{c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF"+HEAD[b].slice(1)}};c.font={name:FONT,size:14,bold:true,color:{argb:"FFFFFFFF"}};c.alignment={horizontal:"center",vertical:"middle"};c.border={top:white,bottom:white,left:white,right:white}});
       const list=items.filter(t=>t.base===b).sort((x,y)=>x.seq-y.seq);
       list.forEach((t,i)=>{
         const r=ws.getRow(5+i);
         const rich=runs(String(t.note||"")).map(x=>({text:x.t,font:{name:FONT,size:12,bold:x.b||undefined,underline:x.u||undefined,color:x.r?{argb:"FFE0161B"}:undefined}}));
-        r.values=[i+1,t.item,t.target,rateTxt(t.rate),rich.length?{richText:rich}:""];
+        const rr=runs(rateTxt(t.rate)).map(x=>({text:x.t,font:{name:FONT,size:12,bold:x.b||undefined,color:x.r?{argb:"FFE0161B"}:undefined}}));
+        r.values=[i+1,t.item,t.target,rr.length?{richText:rr}:"",rich.length?{richText:rich}:""];
         const fill={type:"pattern",pattern:"solid",fgColor:{argb:i%2?"FFF2F2F4":"FFD6DAEE"}};
         r.eachCell({includeEmpty:true},(c,col)=>{c.fill=fill;c.border={top:white,bottom:white,left:white,right:white};
-          if(col<5){c.font={name:FONT,size:col===2?14:12};c.alignment={horizontal:col===1?"left":"center",vertical:"middle",indent:col===1?1:0}}
+          if(col<5){c.font={name:FONT,size:col===2?14:12};c.alignment={horizontal:col===1?"left":"center",vertical:"middle",indent:col===1?1:0,wrapText:col===2}}
           else c.alignment={horizontal:"left",vertical:"middle",wrapText:true}});
         const lines=String(t.note||"").replace(/\*\*|__|!!/g,"").split("\n").reduce((n,l)=>n+Math.max(1,Math.ceil([...l].reduce((w,ch)=>w+(ch.charCodeAt(0)>255?2:1),0)/84)),0);
-        r.height=Math.max(28,lines*19+10);
+        r.height=Math.max(28,Math.max(lines,String(t.item||"").split("\n").length)*19+10);
       });
       ws.pageSetup.printArea=`A1:E${4+list.length}`;
     }
