@@ -225,7 +225,7 @@ async function load(){
   try{const j=await api({action:"kpiList"});
     if(!Array.isArray(j.items)) throw new Error("old");
     items=j.items;setStatus(`已同步・${new Date().toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",hour12:false,timeZone:"Asia/Taipei"})} 更新`);render()}
-  catch(err){setStatus(err.message==="未知動作"||err.message==="old"?"Google 試算表的 Apps Script 還是舊版：請貼上新版 apps-script.gs 並部署「新版本」。":"讀取失敗，請確認網路或稍後再試。",true)}
+  catch(err){setStatus(["未知動作","old","need_pass"].includes(err.message)?"Google 試算表的 Apps Script 還是舊版：請貼上新版 apps-script.gs 並部署「新版本」。":"讀取失敗，請確認網路或稍後再試。",true)}
 }
 
 /* form */
