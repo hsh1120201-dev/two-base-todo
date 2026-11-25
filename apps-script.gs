@@ -149,8 +149,7 @@ const KPI_SHEET = 'KPI';
 const KPI_COLS = ['id','base','seq','item','target','rate','note','updatedAt'];
 const KPI_BASES = ['社創','青創'];
 const KPI_SEED_VERSION = 3;
-// v3（11/25）：社創改用 11 月工作報告簡報的 18 項、青創第 15 項 MT 回饋改 402 份 → 這些列會整列換掉
-const KPI_REPLACE_V3 = { base: '社創', ids: ['q15'] };
+// v3（11/25）：社創改用 11 月工作報告簡報的 18 項、青創第 15 項 MT 回饋改 402 份（線上試算表已直接寫入，這裡只是新試算表的初始資料）
 
 const KPI_SEED = [
   ["q1","青創",1,"團隊招募","20組團隊","100%","第一期已於3/23辦理進駐18間；第二期於6/18辦理完畢招募1間，第三期於7/23辦理完畢招募3間，計22組。"],
@@ -204,12 +203,6 @@ function kpiSheet_() {
     // 補上新版種子資料裡、試算表還沒有的項目（每個版本只補一次，刪掉的不會再跑回來）
     const props = PropertiesService.getScriptProperties();
     const prevV = Number(props.getProperty('KPI_SEED_V') || 1);
-    if (prevV < 3) {
-      const vals = sh.getDataRange().getDisplayValues();
-      for (let i = vals.length - 1; i >= 1; i--) {
-        if (vals[i][1] === KPI_REPLACE_V3.base || KPI_REPLACE_V3.ids.indexOf(vals[i][0]) >= 0) sh.deleteRow(i + 1);
-      }
-    }
     if (prevV < KPI_SEED_VERSION) {
       const have = sh.getRange(1, 1, Math.max(sh.getLastRow(), 1), 1).getDisplayValues().map(function (r) { return r[0]; });
       const now = new Date().toISOString();
