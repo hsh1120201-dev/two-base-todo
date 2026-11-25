@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>加入青創待辦</title><link rel="icon" href="logo.svg">
+<style>
+body{margin:0;background:#FBF8F3;color:#231815;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;padding:24px max(16px,env(safe-area-inset-left))}
+.w{max-width:640px;margin:0 auto;display:grid;gap:16px}
+h1{margin:0;font-size:26px} ul{margin:0;padding-left:20px;line-height:1.8} b{color:#0A6EBD}
+button{font:inherit;font-size:20px;font-weight:700;border:0;border-radius:999px;background:#E85A1E;color:#fff;padding:14px 28px;cursor:pointer}
+button:disabled{opacity:.5}
+input{font:inherit;font-size:18px;padding:10px 12px;border:2px solid #E6DED4;border-radius:10px;width:100%;box-sizing:border-box}
+#msg{font-size:18px;font-weight:700} .ok{color:#2E7D4F} .err{color:#C62828}
+a{color:#0A6EBD;font-weight:700}
+</style>
+<script src="config.js?v=20261123"></script></head><body><div class="w">
+<h1>加入 11 筆青創基地待辦</h1>
+<ul><li><b>11/26</b> 第 2 次基地營運輔導會議：邀請顧問、敲定日期</li><li><b>11/30</b> 辦理第 2 次基地營運輔導會議，會後完成紀錄</li><li><b>11/28</b> Meet Taipei 摺頁 500 份：確認印製核銷、留存發放紀錄與照片</li><li><b>12/04</b> 業師輔導補 4 次（22→26），填輔導紀錄表</li><li><b>12/18</b> 業師輔導再補 4 次（26→30），填輔導紀錄表</li><li><b>12/04</b> 基地影片（1–2 分鐘，新春茶會＋Meet Taipei 素材）剪輯完成送審</li><li><b>12/11</b> 基地影片上架並投放廣告（目標觸及 5,000）</li><li><b>12/11</b> 企業組織／學群參訪第 3 場</li><li><b>12/18</b> 企業組織／學群參訪第 4 場</li><li><b>12/18</b> 滿意度問卷再收 70 份以上（12/1 成果展、課程、參訪），確認累計 ≥500</li><li><b>12/30</b> 截取基地影片觸及數、整理問卷統計，彙整青創 KPI 佐證</li></ul>
+<label>編輯密碼（EDIT_PASS）<input id="pw" type="password" autocomplete="current-password"></label>
+<div><button id="go" type="button">一鍵加入</button></div>
+<div id="msg"></div>
+<a href="./">← 回待辦頁</a>
+</div>
+<script>
+const ITEMS=[{"title": "第 2 次基地營運輔導會議：邀請顧問、敲定日期", "base": "青創", "start": "", "due": "2026-11-26", "priority": "高", "kpi": "營運輔導會議 2/2", "owner": "", "note": "上半年 6/29 線上已辦；下半年預定 11 月"}, {"title": "辦理第 2 次基地營運輔導會議，會後完成紀錄", "base": "青創", "start": "", "due": "2026-11-30", "priority": "高", "kpi": "營運輔導會議 2/2", "owner": "", "note": ""}, {"title": "Meet Taipei 摺頁 500 份：確認印製核銷、留存發放紀錄與照片", "base": "青創", "start": "", "due": "2026-11-28", "priority": "中", "kpi": "文宣品-摺頁 1000 份", "owner": "", "note": "4 月已印 500 份；本批 500 份於 11 月展期使用"}, {"title": "業師輔導補 4 次（22→26），填輔導紀錄表", "base": "青創", "start": "2026-11-25", "due": "2026-12-04", "priority": "高", "kpi": "業師輔導 30 次", "owner": "", "note": ""}, {"title": "業師輔導再補 4 次（26→30），填輔導紀錄表", "base": "青創", "start": "2026-12-07", "due": "2026-12-18", "priority": "高", "kpi": "業師輔導 30 次", "owner": "", "note": ""}, {"title": "基地影片（1–2 分鐘，新春茶會＋Meet Taipei 素材）剪輯完成送審", "base": "青創", "start": "", "due": "2026-12-04", "priority": "高", "kpi": "基地影片 1 支", "owner": "", "note": ""}, {"title": "基地影片上架並投放廣告（目標觸及 5,000）", "base": "青創", "start": "2026-12-07", "due": "2026-12-11", "priority": "高", "kpi": "基地影片 1 支", "owner": "", "note": ""}, {"title": "企業組織／學群參訪第 3 場", "base": "青創", "start": "", "due": "2026-12-11", "priority": "高", "kpi": "企業組織/學群參訪 4 案", "owner": "", "note": "目前 2 案（1/26 靜宜大學、7/9 雲科大）"}, {"title": "企業組織／學群參訪第 4 場", "base": "青創", "start": "", "due": "2026-12-18", "priority": "高", "kpi": "企業組織/學群參訪 4 案", "owner": "", "note": ""}, {"title": "滿意度問卷再收 70 份以上（12/1 成果展、課程、參訪），確認累計 ≥500", "base": "青創", "start": "2026-12-01", "due": "2026-12-18", "priority": "中", "kpi": "滿意度調查 500 份", "owner": "", "note": "目前 430 份（活動 70＋Meet Taipei 360）"}, {"title": "截取基地影片觸及數、整理問卷統計，彙整青創 KPI 佐證", "base": "青創", "start": "2026-12-21", "due": "2026-12-30", "priority": "中", "kpi": "佐證", "owner": "", "note": ""}];
+const API=window.TODO_API_URL, KEY="two-base-todo-pass";
+try{document.getElementById("pw").value=localStorage.getItem(KEY)||""}catch(e){}
+const call=b=>fetch(API,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(b)}).then(r=>r.json());
+const msg=(t,c)=>{const m=document.getElementById("msg");m.textContent=t;m.className=c||""};
+document.getElementById("go").onclick=async()=>{
+  const pass=document.getElementById("pw").value.trim(), btn=document.getElementById("go");
+  btn.disabled=true;
+  try{
+    const chk=await call({action:"checkPass",pass});
+    if(!chk.ok){msg(chk.error==="need_pass"?"密碼不對，請再試一次。":"錯誤："+chk.error,"err");btn.disabled=false;return}
+    try{localStorage.setItem(KEY,pass)}catch(e){}
+    const have=new Set(((await call({action:"list"})).tasks||[]).map(t=>t.title));
+    let add=0,skip=0;
+    for(const it of ITEMS){
+      if(have.has(it.title)){skip++;continue}
+      msg(`加入中… ${add+skip+1} / ${ITEMS.length}`);
+      const r=await call({action:"save",pass,task:it}); if(!r.ok) throw new Error(r.error); add++;
+    }
+    msg(`完成！新增 ${add} 筆${skip?`，${skip} 筆已經有了所以略過`:""}。回待辦頁就看得到。`,"ok");
+  }catch(e){msg("加入失敗："+e.message+"，請稍後再按一次（已加入的不會重複）。","err");btn.disabled=false}
+};
+</script></body></html>
