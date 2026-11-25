@@ -69,6 +69,7 @@ function doPost(e) {
   try { req = JSON.parse(e.postData.contents || '{}'); } catch (err) { return json_({ ok: false, error: '格式錯誤' }); }
   try {
     if (req.action === 'list') return json_({ ok: true, tasks: list_() });
+    if (req.action === 'kpiList') return json_({ ok: true, items: kpiList_() });
     const pass = PropertiesService.getScriptProperties().getProperty('EDIT_PASS');
     if (pass && String(req.pass || '') !== pass) return json_({ ok: false, error: 'need_pass' });
     if (req.action === 'checkPass') return json_({ ok: true });
@@ -76,6 +77,8 @@ function doPost(e) {
     try {
       if (req.action === 'save') return json_({ ok: true, task: save_(req.task || {}) });
       if (req.action === 'delete') { del_(String(req.id || '')); return json_({ ok: true }); }
+      if (req.action === 'kpiSave') return json_({ ok: true, item: kpiSave_(req.item || {}) });
+      if (req.action === 'kpiDelete') { kpiDel_(String(req.id || '')); return json_({ ok: true }); }
     } finally { lock.releaseLock(); }
     return json_({ ok: false, error: '未知動作' });
   } catch (err) { return json_({ ok: false, error: String(err.message || err) }); }
@@ -135,3 +138,98 @@ function del_(id) {
 }
 
 function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+
+/* ===== 月會 KPI 達成表（kpi.html）=====
+ * 「KPI」工作表第一次被讀取時會自動建立並匯入初始資料，不用另外執行 setup。
+ * 欄位：id, base(社創/青創), seq(排序), item(重點執行項目), target(年度目標), rate(達成率), note(備註說明), updatedAt
+ * 備註可用 **粗體**、__底線__。
+ */
+const KPI_SHEET = 'KPI';
+const KPI_COLS = ['id','base','seq','item','target','rate','note','updatedAt'];
+const KPI_BASES = ['社創','青創'];
+
+const KPI_SEED = [
+  ["q1","青創",1,"團隊招募","20組團隊","100%","第一期已於3/23辦理進駐18間；第二期於6/18辦理完畢招募1間，第三期於7/23辦理完畢招募3間，計22組。"],
+  ["q2","青創",2,"團隊交流凝聚方案","2次","100%","上半年7/23青社創共振日凝聚交流工作坊辦理完畢；下半年度11/23(一)13:00-17:00「上市之路-挑戰你的商業決策思維」辦理完畢，簽到24人(含講師2人、工作人員2人)，參與團隊13組計20人。"],
+  ["q3","青創",3,"企業組織/學群參訪","4案","50%","__7/31前應辦理兩次__\n1/26靜宜大學，7/9雲科大青創中心兩基地參訪。"],
+  ["q4","青創",4,"其他創業基地交流","1次","100%","7/21(二)桃園青創基地及A8智慧產業加速器參訪完畢。"],
+  ["q5","青創",5,"國際參訪","1次","100%","__至少帶5組新創團隊前往__，9/8-9/11前往馬來西亞拓商。(**宏力、數碼牛**、加減數位、承菲、先進材)"],
+  ["q6","青創",6,"創業資金","200萬","100%","__年度媒合15案以上__，輔導媒合竹縣SBIR及其他競賽/補助案持續追蹤中。**(日日風味所、加減數位、果多文創、恩科、數碼牛、積世達/宜智科技: SITI台北創業補助獲100萬+戰國策全國創新創業競賽冠軍獲8萬+新創千里馬競賽銅獎獲2萬、SBIR獲補助團隊及金額-恩科創新82萬元、承菲智鏈80萬元、加減數位80萬元，計352萬)**"],
+  ["q7","青創",7,"團隊健檢","1場","100%","__進駐後45日內辦理__，4/16已核定。"],
+  ["q8","青創",8,"業師輔導","30次","73%","進駐團隊或一般青創家輔導紀錄表已累計**22次**，媒合進行中。"],
+  ["s1","社創",1,"校園推廣參訪","4場","75%","5/6新竹B區BNI、7/9雲科大青創中心、11/7清大「產業創新與生涯探索課程」，12月上旬再排1場。"],
+  ["s2","社創",2,"培力課程場次","15場","93%","已辦14場（含11/10「永續商模」），12月辦第15、16場。"],
+  ["s3","社創",3,"培力課程總時數","34小時","91%","累計31小時，再補3小時以上。"],
+  ["s4","社創",4,"培力課程總人次","300人次","70%","依簽到表累計**210人次**（不含長官、講師、工作人員），剩餘2場每場需45人以上。"],
+  ["s5","社創",5,"推薦團隊參加青創主題展","2組","100%","先進材、云碩參加3/27新春交流茶會。"],
+  ["s6","社創",6,"國內大型新創展","8組","100%","Meet Taipei 2026（11/19–21）社創7組＋青創5組，共12間參展。"],
+  ["s7","社創",7,"新創展精華影片","1支","0%","__觸及5,000人__，11/27初剪送審，12/4前上架投放廣告。"],
+  ["s8","社創",8,"本案活動精華影片","1支","0%","__觸及5,000人__，12/11前送審，12/16前上架投放廣告。"],
+  ["s9","社創",9,"進駐團隊招募","15組","100%","續約13組＋8/26審查新增5組，計18組。"],
+  ["s10","社創",10,"新創健檢","1場","100%","6/18第一場、9月第二場辦理完畢。"],
+  ["s11","社創",11,"迎新交流聚會","1場","100%","10/7辦理完畢。"],
+  ["s12","社創",12,"業師一對一輔導","40次","80%","已核備累計32次，11–12月持續媒合。"],
+  ["s13","社創",13,"每月工作會議","12次","83%","1–10月均已辦理，11、12月各1次。"],
+  ["s14","社創",14,"協助取得創業資金","100萬","100%","先進材SBIR 66萬＋千里馬競賽5萬、蘊宮女子美學館1萬、知享桃園SBIR 70萬，**計142萬**。"],
+  ["s15","社創",15,"創業競賽前三名","1組","100%","新創千里馬創業競賽金獎：先進材。"],
+  ["s16","社創",16,"創業貸款聯繫單","10件","90%","已送件9件，11/30前再送1件以上。"],
+  ["s17","社創",17,"基地營運顧問會議","2次","50%","上半年1次已辦（線上），第2次11月底辦理。"],
+  ["s18","社創",18,"FB粉專貼文","20則","100%","已發28則，FB＋IG合計觸及54,275人次；逐則確認觸及2,500人。"],
+  ["s19","社創",19,"滿意度調查有效問卷","200份","73%","課程累計145份，Meet Taipei、成果展、進駐團隊問卷持續收。"],
+  ["s20","社創",20,"空調設備保養","1次","0%","11月底前完成並留保養單。"]
+];
+
+function kpiSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(KPI_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(KPI_SHEET);
+    sh.getRange(1, 1, sh.getMaxRows(), KPI_COLS.length).setNumberFormat('@');
+    sh.getRange(1, 1, 1, KPI_COLS.length).setValues([KPI_COLS]).setFontWeight('bold');
+    sh.setFrozenRows(1);
+    const now = new Date().toISOString();
+    const rows = KPI_SEED.map(function (r) { return [r[0], r[1], String(r[2]), r[3], r[4], r[5], r[6], now]; });
+    sh.getRange(2, 1, rows.length, KPI_COLS.length).setValues(rows);
+  }
+  return sh;
+}
+
+function kpiList_() {
+  const v = kpiSheet_().getDataRange().getDisplayValues();
+  return v.slice(1).filter(function (r) { return r[0]; }).map(function (r) {
+    const o = {}; KPI_COLS.forEach(function (k, i) { o[k] = r[i]; });
+    o.seq = Number(o.seq) || 0;
+    return o;
+  });
+}
+
+function kpiSave_(t) {
+  const sh = kpiSheet_();
+  const ids = sh.getRange(1, 1, sh.getLastRow(), 1).getDisplayValues().map(function (r) { return r[0]; });
+  const idx = t.id ? ids.indexOf(String(t.id)) : -1;
+  let cur = {};
+  if (idx > 0) { const r = sh.getRange(idx + 1, 1, 1, KPI_COLS.length).getDisplayValues()[0]; KPI_COLS.forEach(function (k, i) { cur[k] = r[i]; }); }
+  const o = {
+    id: idx > 0 ? cur.id : 'k' + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36),
+    base: t.base !== undefined ? (KPI_BASES.indexOf(t.base) >= 0 ? t.base : '社創') : cur.base,
+    seq: t.seq !== undefined ? String(Number(t.seq) || 0) : cur.seq,
+    item: t.item !== undefined ? clean_(t.item, 60) : cur.item,
+    target: t.target !== undefined ? clean_(t.target, 40) : cur.target,
+    rate: t.rate !== undefined ? clean_(t.rate, 20) : cur.rate,
+    note: t.note !== undefined ? clean_(t.note, 2000) : cur.note,
+    updatedAt: new Date().toISOString()
+  };
+  if (!o.item) throw new Error('請填寫重點執行項目');
+  const row = KPI_COLS.map(function (k) { return o[k]; });
+  if (idx > 0) sh.getRange(idx + 1, 1, 1, KPI_COLS.length).setValues([row]);
+  else { const r = sh.getLastRow() + 1; sh.getRange(r, 1, 1, KPI_COLS.length).setNumberFormat('@').setValues([row]); }
+  o.seq = Number(o.seq) || 0;
+  return o;
+}
+
+function kpiDel_(id) {
+  const sh = kpiSheet_();
+  const ids = sh.getRange(1, 1, sh.getLastRow(), 1).getDisplayValues().map(function (r) { return r[0]; });
+  const idx = ids.indexOf(id);
+  if (idx > 0) sh.deleteRow(idx + 1);
+}

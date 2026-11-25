@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>月會 KPI 達成表｜新竹社創基地 × 新竹青創基地</title>
+<link rel="icon" href="logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+:root{
+  --paper:#FBF8F3; --card:#FFFFFF; --ink:#231815; --muted:#6F625C; --line:#E6DED4;
+  --sun:#F29600; --ember:#E85A1E; --sea:#1D7FD0; --deep:#0A6EBD;
+  --ok:#2E7D4F; --bad:#C62828; --soft-bad:#FDE6E4;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --f-num:"Barlow Condensed","Arial Narrow",sans-serif;
+  /* 匯出表格的配色（照月會簡報） */
+  --k-head:#0BA5C3; --k-odd:#D6DAEE; --k-even:#F2F2F4;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{background:var(--paper);color:var(--ink)}
+body{font-family:var(--f-body);font-size:15px;line-height:1.55;margin:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1080px;margin:0 auto;display:grid;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 20px;border-bottom:2px solid var(--ink);padding-bottom:14px}
+header img{height:46px;width:auto}
+.ht{display:grid;gap:2px}
+.eyebrow{font-size:12px;letter-spacing:.14em;color:var(--muted);font-weight:500}
+h1{margin:0;font-size:clamp(22px,3vw,30px);font-weight:900;line-height:1.25}
+.back{font-size:14px;font-weight:700;color:var(--deep)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip,button{font:inherit;font-size:14px;font-weight:700;border-radius:999px;border:2px solid var(--line);background:var(--card);color:var(--ink);padding:6px 14px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+button.primary{background:var(--ember);border-color:var(--ember);color:#fff}
+button.dl{background:var(--deep);border-color:var(--deep);color:#fff}
+button:disabled{opacity:.5;cursor:wait}
+button:focus-visible,.chip:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+.status{font-size:13px;color:var(--muted)}
+.status.err{color:var(--bad);font-weight:700}
+[hidden]{display:none!important}
+h2{margin:0;font-size:16px;font-weight:900}
+.hint{font-size:13px;color:var(--muted)}
+
+/* preview */
+.pv{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;overflow:hidden}
+.pvin{transform-origin:0 0}
+
+/* ===== 匯出用表格（固定 1600px 寬，預覽時縮放） ===== */
+.sheet{width:1600px;background:#fff;padding:22px 0 0;font-family:"Microsoft JhengHei","微軟正黑體","Noto Sans TC","PingFang TC",sans-serif;color:#1d1d1f}
+.sheet .lg{height:92px;margin:0 0 18px 22px;display:block}
+.sheet table{width:100%;border-collapse:collapse;table-layout:fixed}
+.sheet th{background:var(--k-head);color:#fff;font-size:30px;font-weight:700;padding:10px 8px;letter-spacing:.04em}
+.sheet td{font-size:25px;line-height:1.4;padding:10px 12px;vertical-align:middle;border-top:3px solid #fff}
+.sheet tbody tr:nth-child(odd) td{background:var(--k-odd)}
+.sheet tbody tr:nth-child(even) td{background:var(--k-even)}
+.sheet td.no{font-size:30px;padding-left:22px}
+.sheet td.it{text-align:center;font-size:29px}
+.sheet td.tg,.sheet td.rt{text-align:center;font-size:25px}
+.sheet td.nt{text-align:left;overflow-wrap:anywhere}
+.sheet u{text-underline-offset:4px}
+.sheet tbody tr{cursor:pointer}
+.pv .sheet tbody tr:hover td{filter:brightness(.95)}
+
+/* editor list */
+.list{display:grid;gap:6px;list-style:none;margin:0;padding:0}
+.row{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.row .n{font-family:var(--f-num);font-size:22px;font-weight:700;line-height:1.1;color:var(--muted)}
+.row .t{font-weight:700}
+.row .m{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.row .r{font-family:var(--f-num);font-size:20px;font-weight:700;color:var(--ok)}
+.row .r.low{color:var(--ember)}
+.edit{font-size:13px;padding:4px 10px;border-width:1px}
+
+form{background:var(--card);border:2px solid var(--ink);border-radius:16px;padding:16px;display:grid;gap:12px}
+.grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.grid .full{grid-column:1/-1} .grid .half{grid-column:span 3} .grid .one{grid-column:span 1} .grid .two{grid-column:span 2}
+@media (max-width:640px){.grid .half,.grid .two{grid-column:1/-1}.grid .one{grid-column:span 3}}
+label{display:grid;gap:4px;font-size:13px;font-weight:700;color:var(--muted)}
+input,textarea{font:inherit;font-size:15px;font-weight:400;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0;width:100%}
+textarea{resize:vertical;min-height:90px}
+.factions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center}
+.factions .del{margin-right:auto;color:var(--bad);border-color:var(--soft-bad)}
+.passbox form{border-color:var(--sea)}
+footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+</style>
+<script src="config.js?v=20261125"></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="ht"><img src="logo.svg" alt="新竹社創基地"></div>
+    <div class="ht" style="text-align:right">
+      <span class="eyebrow">新竹社創基地 × 新竹青創基地｜115 年度</span>
+      <h1>月會 KPI 達成表</h1>
+      <a class="back" href="./">← 回待辦追蹤</a>
+    </div>
+  </header>
+
+  <div class="bar">
+    <div class="chips" id="baseChips" role="group" aria-label="基地">
+      <button class="chip" type="button" data-base="青創" aria-pressed="false">青創基地</button>
+      <button class="chip" type="button" data-base="社創" aria-pressed="false">社創基地</button>
+    </div>
+    <div class="chips">
+      <button class="dl" type="button" id="pngBtn">下載圖片 PNG</button>
+      <button class="dl" type="button" id="xlsxBtn">下載 Excel</button>
+    </div>
+  </div>
+  <div class="status" id="status">連線中…</div>
+
+  <section class="pv" aria-label="匯出預覽"><div class="pvin" id="pvin"></div></section>
+  <p class="hint" style="margin:-8px 0 0">上面就是匯出的樣子，點任一列可以修改。圖片可直接貼進月會簡報；Excel 內含社創、青創各一頁。</p>
+
+  <div id="passBox" class="passbox" hidden>
+    <form id="passForm">
+      <label>編輯密碼（和待辦追蹤相同）<input id="passIn" type="password" autocomplete="current-password" required></label>
+      <div class="factions"><span class="hint" id="passMsg"></span><button type="button" id="passCancel">取消</button><button type="submit" class="primary">確認</button></div>
+    </form>
+  </div>
+
+  <form id="form" hidden>
+    <div class="grid">
+      <label class="one">序號<input id="fSeq" type="number" min="0" step="1" required></label>
+      <label class="half">重點執行項目<input id="fItem" maxlength="60" required placeholder="例如：業師輔導"></label>
+      <label class="one">年度目標<input id="fTarget" maxlength="40" placeholder="30次"></label>
+      <label class="one">達成率<input id="fRate" maxlength="20" placeholder="73%"></label>
+      <label class="full">備註說明<textarea id="fNote" maxlength="2000"></textarea></label>
+    </div>
+    <span class="hint">備註小技巧：<b>**粗體**</b>、<u>__底線__</u>，按 Enter 換行。達成率只打數字會自動補 %。</span>
+    <div class="factions">
+      <button type="button" class="del" id="fDel" hidden>刪除這列</button>
+      <button type="button" id="fCancel">取消</button>
+      <button type="submit" class="primary" id="fSave">儲存</button>
+    </div>
+  </form>
+
+  <div class="bar"><h2 id="listTitle">項目</h2><button class="primary" type="button" id="addBtn">＋ 新增項目</button></div>
+  <ul class="list" id="list"></ul>
+
+  <footer>每月月會前：改達成率和備註 → 按「下載圖片 PNG」貼進簡報。資料存在同一份 Google 試算表的「KPI」工作表，也可以直接在試算表改。</footer>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LOGO={"青創":"img/logo-qc.png","社創":"img/logo-sc.png"};
+const NAME={"青創":"青創基地","社創":"社創基地"};
+let items=[], editing=null;
+let base=(()=>{const u=new URLSearchParams(location.search).get("base");if(u==="社創"||u==="青創")return u;try{return localStorage.getItem("kpi-base")||"青創"}catch(e){return "青創"}})();
+
+/* 備註標記：**粗體** __底線__ 換行 */
+function runs(text){
+  const out=[];const re=/(\*\*[\s\S]+?\*\*|__[\s\S]+?__)/g;let last=0,m;
+  const push=(t,b,u)=>{if(t)out.push({t,b,u})};
+  while((m=re.exec(text))){push(text.slice(last,m.index),false,false);
+    const tok=m[0];const inner=tok.slice(2,-2);
+    if(tok.startsWith("**")){ // 粗體內可再有底線
+      for(const r of runs(inner)) push(r.t,true,r.u);
+    }else{for(const r of runs(inner)) push(r.t,r.b,true)}
+    last=m.index+tok.length}
+  push(text.slice(last),false,false);return out;
+}
+const noteHTML=s=>runs(String(s||"")).map(r=>{let h=esc(r.t).replace(/\n/g,"<br>");if(r.u)h=`<u>${h}</u>`;if(r.b)h=`<b>${h}</b>`;return h}).join("");
+const rateTxt=s=>{s=String(s||"").trim();return /^\d+(\.\d+)?$/.test(s)?s+"%":s};
+const rateNum=s=>{const m=String(s||"").match(/(\d+(\.\d+)?)\s*%/);return m?Number(m[1]):null};
+const mine=()=>items.filter(t=>t.base===base).sort((a,b)=>a.seq-b.seq||String(a.item).localeCompare(String(b.item)));
+
+function sheetHTML(b,list){
+  return `<div class="sheet"><img class="lg" src="${LOGO[b]}" alt="${esc(NAME[b])}">
+  <table><colgroup><col style="width:70px"><col style="width:330px"><col style="width:180px"><col style="width:150px"><col></colgroup>
+  <thead><tr><th></th><th>重點執行項目</th><th>年度目標</th><th>達成率</th><th>備註說明</th></tr></thead>
+  <tbody>${list.map((t,i)=>`<tr data-id="${esc(t.id)}"><td class="no">${i+1}</td><td class="it">${esc(t.item)}</td><td class="tg">${esc(t.target)}</td><td class="rt">${esc(rateTxt(t.rate))}</td><td class="nt">${noteHTML(t.note)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+
+function fit(){const box=$("pvin"),pv=box.parentElement;const sh=box.firstElementChild;if(!sh)return;
+  const w=pv.clientWidth-24, s=Math.min(1,w/1600);box.style.transform=`scale(${s})`;box.style.height=(sh.offsetHeight*s)+"px";box.style.width="1600px";pv.style.height=(sh.offsetHeight*s+24)+"px"}
+new ResizeObserver(fit).observe(document.querySelector(".pv"));
+
+function render(){
+  document.querySelectorAll("#baseChips .chip").forEach(c=>c.setAttribute("aria-pressed",String(c.dataset.base===base)));
+  const list=mine();
+  $("pvin").innerHTML=sheetHTML(base,list);
+  $("pvin").querySelectorAll("img").forEach(im=>im.addEventListener("load",fit));
+  fit();
+  $("listTitle").textContent=`${NAME[base]}・${list.length} 個項目`;
+  $("list").innerHTML=list.length?list.map((t,i)=>{const n=rateNum(rateTxt(t.rate));
+    return `<li class="row"><span class="n">${i+1}</span><div><div class="t">${esc(t.item)}　<span class="r${n!==null&&n<100?" low":""}">${esc(rateTxt(t.rate))}</span></div><div class="m">目標 ${esc(t.target)}｜${esc(String(t.note||"").replace(/\*\*|__/g,"").slice(0,80))}</div></div><button type="button" class="edit" data-edit="${esc(t.id)}">編輯</button></li>`}).join("")
+    :`<li class="row"><span></span><div class="m">還沒有項目，按「＋ 新增項目」。</div><span></span></li>`;
+}
+
+function setStatus(msg,err){const s=$("status");s.textContent=msg;s.classList.toggle("err",!!err)}
+
+$("baseChips").addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;base=b.dataset.base;try{localStorage.setItem("kpi-base",base)}catch(e){};closeForm();render()});
+$("pvin").addEventListener("click",e=>{const tr=e.target.closest("tr[data-id]");if(tr)openForm(items.find(t=>t.id===tr.dataset.id))});
+$("list").addEventListener("click",e=>{const b=e.target.closest("[data-edit]");if(b)openForm(items.find(t=>t.id===b.dataset.edit))});
+
+/* API：和待辦追蹤共用 Apps Script 與編輯密碼 */
+const API=window.TODO_API_URL||"";
+const configured=/^https:\/\/script\.google\.com\/.+\/exec$/.test(API);
+const PASS_KEY="two-base-todo-pass";
+const getPass=()=>{try{return localStorage.getItem(PASS_KEY)||""}catch(e){return ""}};
+const setPass=v=>{try{v?localStorage.setItem(PASS_KEY,v):localStorage.removeItem(PASS_KEY)}catch(e){}};
+async function api(body){
+  const r=await fetch(API,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({...body,pass:getPass()})});
+  const j=await r.json();
+  if(!j.ok){const e=new Error(j.error||"error");e.code=j.error;throw e}
+  return j;
+}
+async function write(body){
+  try{return await api(body)}
+  catch(err){if(err.code!=="need_pass")throw err;const ok=await askPass();if(!ok)throw err;return await api(body)}
+}
+function askPass(){
+  return new Promise(res=>{
+    const box=$("passBox");box.hidden=false;$("passIn").value="";$("passIn").focus();$("passMsg").textContent="";
+    const done=v=>{box.hidden=true;$("passCancel").onclick=null;$("passForm").onsubmit=null;res(v)};
+    $("passCancel").onclick=()=>done(false);
+    $("passForm").onsubmit=async e=>{e.preventDefault();setPass($("passIn").value.trim());
+      try{await api({action:"checkPass"});done(true)}catch(err){setPass("");$("passMsg").textContent=err.code==="need_pass"?"密碼不對，請再試一次。":"連線失敗，請稍後再試。"}};
+  });
+}
+async function load(){
+  if(!configured){setStatus("尚未設定資料庫網址（config.js）。",true);return}
+  try{const j=await api({action:"kpiList"});
+    if(!Array.isArray(j.items)) throw new Error("old");
+    items=j.items;setStatus(`已同步・${new Date().toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",hour12:false,timeZone:"Asia/Taipei"})} 更新`);render()}
+  catch(err){setStatus(err.message==="未知動作"||err.message==="old"?"Google 試算表的 Apps Script 還是舊版：請貼上新版 apps-script.gs 並部署「新版本」。":"讀取失敗，請確認網路或稍後再試。",true)}
+}
+
+/* form */
+function openForm(t){
+  editing=t||null;const list=mine();
+  $("fSeq").value=t?t.seq:((list.length?Math.max(...list.map(x=>x.seq)):0)+1);
+  $("fItem").value=t?.item||"";$("fTarget").value=t?.target||"";$("fRate").value=t?.rate||"";$("fNote").value=t?.note||"";
+  $("fDel").hidden=!t;$("fSave").textContent=t?"儲存變更":"新增";
+  $("form").hidden=false;$("fItem").focus();$("form").scrollIntoView({block:"nearest",behavior:"smooth"});
+}
+let delArmed=false;
+function closeForm(){$("form").hidden=true;editing=null;delArmed=false;$("fDel").textContent="刪除這列"}
+$("addBtn").addEventListener("click",()=>openForm(null));
+$("fCancel").addEventListener("click",closeForm);
+$("fDel").addEventListener("click",async()=>{
+  if(!editing)return;
+  if(!delArmed){delArmed=true;$("fDel").textContent="再按一次確認刪除";return}
+  const id=editing.id;
+  try{await write({action:"kpiDelete",id});items=items.filter(t=>t.id!==id);render();setStatus("已刪除");closeForm()}catch(err){wErr(err)}
+});
+$("form").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const body={base,seq:Number($("fSeq").value)||0,item:$("fItem").value.trim(),target:$("fTarget").value.trim(),rate:rateTxt($("fRate").value),note:$("fNote").value.trim()};
+  if(!body.item){setStatus("請填寫重點執行項目",true);return}
+  if(editing)body.id=editing.id;
+  $("fSave").disabled=true;
+  try{const j=await write({action:"kpiSave",item:body});const i=items.findIndex(x=>x.id===j.item.id);if(i>=0)items[i]=j.item;else items.push(j.item);render();setStatus(editing?"已更新":"已新增");closeForm()}
+  catch(err){wErr(err)}finally{$("fSave").disabled=false}
+});
+function wErr(err){setStatus(err?.code==="need_pass"?"需要編輯密碼才能修改。":"儲存失敗："+(err?.message&&err.message!=="error"?err.message:"請稍後再試一次。"),true)}
+
+/* ===== 匯出 ===== */
+function loadScript(src){return new Promise((res,rej)=>{if(document.querySelector(`script[src="${src}"]`))return res();const s=document.createElement("script");s.src=src;s.onload=res;s.onerror=()=>rej(new Error("載入失敗："+src));document.head.appendChild(s)})}
+function stamp(){const p=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Taipei",year:"numeric",month:"2-digit"}).format(new Date()).split("-");return `${Number(p[0])-1911}年${Number(p[1])}月`}
+function save(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
+
+$("pngBtn").addEventListener("click",async()=>{
+  const btn=$("pngBtn");btn.disabled=true;setStatus("產生圖片中…");
+  try{
+    await loadScript("lib/html2canvas.min.js");
+    const host=document.createElement("div");host.style.cssText="position:fixed;left:-20000px;top:0;";host.innerHTML=sheetHTML(base,mine());document.body.appendChild(host);
+    await Promise.all([...host.querySelectorAll("img")].map(im=>im.complete?0:new Promise(r=>{im.onload=im.onerror=r})));
+    if(document.fonts)await document.fonts.ready;
+    const cv=await html2canvas(host.firstElementChild,{scale:1.5,backgroundColor:"#ffffff",logging:false});
+    host.remove();
+    cv.toBlob(b=>{save(b,`${NAME[base]}_KPI達成表_${stamp()}.png`);setStatus("圖片已下載")},"image/png");
+  }catch(err){setStatus("圖片產生失敗："+err.message,true)}finally{btn.disabled=false}
+});
+
+async function pngBuf(src){const r=await fetch(src);return await r.arrayBuffer()}
+function imgSize(src){return new Promise(r=>{const im=new Image();im.onload=()=>r([im.naturalWidth,im.naturalHeight]);im.src=src})}
+$("xlsxBtn").addEventListener("click",async()=>{
+  const btn=$("xlsxBtn");btn.disabled=true;setStatus("產生 Excel 中…");
+  try{
+    await loadScript("lib/exceljs.min.js");
+    const wb=new ExcelJS.Workbook();wb.creator="兩基地待辦追蹤";
+    const FONT="微軟正黑體";const white={style:"thin",color:{argb:"FFFFFFFF"}};
+    for(const b of [base, base==="青創"?"社創":"青創"]){
+      const ws=wb.addWorksheet(NAME[b],{pageSetup:{orientation:"landscape",paperSize:9,fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:.4,right:.4,top:.5,bottom:.5,header:.3,footer:.3}},views:[{showGridLines:false}]});
+      ws.columns=[{width:6},{width:24},{width:14},{width:10},{width:95}];
+      const [iw,ih]=await imgSize(LOGO[b]);const id=wb.addImage({buffer:await pngBuf(LOGO[b]),extension:"png"});
+      ws.getRow(1).height=30;ws.getRow(2).height=30;ws.getRow(3).height=10;
+      const h=64;ws.addImage(id,{tl:{col:0.1,row:0.15},ext:{width:Math.round(h*iw/ih),height:h}});
+      const hr=ws.getRow(4);hr.values=["","重點執行項目","年度目標","達成率","備註說明"];hr.height=30;
+      hr.eachCell({includeEmpty:true},c=>{c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF0BA5C3"}};c.font={name:FONT,size:14,bold:true,color:{argb:"FFFFFFFF"}};c.alignment={horizontal:"center",vertical:"middle"};c.border={top:white,bottom:white,left:white,right:white}});
+      const list=items.filter(t=>t.base===b).sort((x,y)=>x.seq-y.seq);
+      list.forEach((t,i)=>{
+        const r=ws.getRow(5+i);
+        const rich=runs(String(t.note||"")).map(x=>({text:x.t,font:{name:FONT,size:12,bold:x.b||undefined,underline:x.u||undefined}}));
+        r.values=[i+1,t.item,t.target,rateTxt(t.rate),rich.length?{richText:rich}:""];
+        const fill={type:"pattern",pattern:"solid",fgColor:{argb:i%2?"FFF2F2F4":"FFD6DAEE"}};
+        r.eachCell({includeEmpty:true},(c,col)=>{c.fill=fill;c.border={top:white,bottom:white,left:white,right:white};
+          if(col<5){c.font={name:FONT,size:col===2?14:12};c.alignment={horizontal:col===1?"left":"center",vertical:"middle",indent:col===1?1:0}}
+          else c.alignment={horizontal:"left",vertical:"middle",wrapText:true}});
+        const lines=String(t.note||"").replace(/\*\*|__/g,"").split("\n").reduce((n,l)=>n+Math.max(1,Math.ceil([...l].reduce((w,ch)=>w+(ch.charCodeAt(0)>255?2:1),0)/84)),0);
+        r.height=Math.max(28,lines*19+10);
+      });
+      ws.pageSetup.printArea=`A1:E${4+list.length}`;
+    }
+    const buf=await wb.xlsx.writeBuffer();
+    save(new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),`兩基地_KPI達成表_${stamp()}.xlsx`);
+    setStatus("Excel 已下載（社創、青創各一頁）");
+  }catch(err){setStatus("Excel 產生失敗："+err.message,true)}finally{btn.disabled=false}
+});
+
+render();load();
+</script>
+</body>
+</html>
