@@ -83,8 +83,11 @@ textarea{resize:vertical;min-height:90px}
 .factions .del{margin-right:auto;color:var(--bad);border-color:var(--soft-bad)}
 .passbox form{border-color:var(--sea)}
 footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+html.embed body{padding:2px 0 4px}
+html.embed header{display:none}
 </style>
 <script src="config.js?v=20261125"></script>
+<script>if(new URLSearchParams(location.search).get("embed"))document.documentElement.classList.add("embed")</script>
 </head>
 <body>
 <div class="wrap">

@@ -99,6 +99,10 @@ textarea{resize:vertical;min-height:60px}
 .todayline::before,.todayline::after{content:"";flex:1;height:2px;background:var(--ember)}
 .empty{background:var(--card);border:2px dashed var(--line);border-radius:16px;padding:28px 20px;text-align:center;color:var(--muted);display:grid;gap:6px}
 .empty b{color:var(--ink);font-size:16px}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--line)}
+.tabs button{border:0;border-bottom:3px solid transparent;border-radius:0;background:transparent;padding:8px 16px;margin-bottom:-2px;font-size:16px;color:var(--muted)}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ember)}
+#kpiFrame{width:100%;border:0;display:block;min-height:600px}
 footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -115,10 +119,17 @@ footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);paddin
       <span class="eyebrow">新竹社創基地 × 新竹青創基地｜115 年度</span>
       <h1>兩基地待辦追蹤</h1>
       <span class="today" id="today">—</span>
-      <a href="kpi.html" style="font-size:14px;font-weight:700;color:var(--deep)">月會 KPI 達成表 →</a>
     </div>
   </header>
 
+  <div class="tabs" role="tablist" aria-label="分頁">
+    <button type="button" role="tab" data-tab="todo" aria-selected="true">待辦追蹤</button>
+    <button type="button" role="tab" data-tab="kpi" aria-selected="false">月會 KPI 達成表</button>
+  </div>
+
+  <div id="kpiPane" hidden><iframe id="kpiFrame" title="月會 KPI 達成表"></iframe></div>
+
+  <div id="todoPane" style="display:grid;gap:20px">
   <div class="stats" id="stats">
     <button class="stat bad" type="button" data-view="over"><span class="n" id="cOver">–</span><span class="k">已逾期</span></button>
     <button class="stat warn" type="button" data-view="week"><span class="n" id="cWeek">–</span><span class="k">7 天內到期</span></button>
@@ -168,9 +179,11 @@ footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);paddin
     <div class="empty"><b>正在載入待辦…</b><span>資料存在 Google 試算表。</span></div>
   </div>
 
+  </div>
+
   <footer>
     <span>勾選即完成、點「編輯」可改日期與負責人；資料存在 Google 試算表，每 30 秒自動更新。</span>
-    <span><a href="kpi.html" style="color:var(--deep);font-weight:700">月會 KPI 達成表</a>・<a href="tv.html" style="color:var(--deep);font-weight:700">開啟電視牆畫面</a>・社創基地 03-5593142 分機 3529</span>
+    <span><a href="tv.html" style="color:var(--deep);font-weight:700">開啟電視牆畫面</a>・社創基地 03-5593142 分機 3529</span>
   </footer>
 </div>
 
@@ -339,6 +352,21 @@ function handleWriteErr(err){
   if(err?.code==="need_pass") setStatus("需要編輯密碼才能修改。",true);
   else setStatus("儲存失敗："+(err?.message&&err.message!=="error"?err.message:"請稍後再試一次。"),true);
 }
+
+/* 分頁：待辦／月會 KPI（KPI 頁以 iframe 載入 kpi.html?embed=1，資料與密碼共用） */
+let kpiRO=null;
+function showTab(tab){
+  const kpi=tab==="kpi";
+  document.querySelectorAll(".tabs [data-tab]").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===tab)));
+  $("todoPane").style.display=kpi?"none":"grid";$("kpiPane").hidden=!kpi;
+  const f=$("kpiFrame");
+  if(kpi&&!f.src){f.src="kpi.html?embed=1";f.addEventListener("load",()=>{
+    const fit=()=>{try{f.style.height=f.contentDocument.documentElement.scrollHeight+"px"}catch(e){}};
+    fit();try{kpiRO=new ResizeObserver(fit);kpiRO.observe(f.contentDocument.body)}catch(e){}})}
+  if(location.hash!==(kpi?"#kpi":"")&&!(location.hash===""&&!kpi))history.replaceState(null,"",kpi?"#kpi":location.pathname+location.search);
+}
+document.querySelector(".tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(b)showTab(b.dataset.tab)});
+if(location.hash==="#kpi")showTab("kpi");
 
 /* start */
 render();
