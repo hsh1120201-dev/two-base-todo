@@ -103,6 +103,7 @@ footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);paddin
       <button class="chip" type="button" data-base="社創" aria-pressed="false">社創基地</button>
     </div>
     <div class="chips">
+      <label style="display:flex;gap:6px;align-items:center;font-size:13px">每張圖<select id="perImg" style="font:inherit;border:2px solid var(--line);border-radius:999px;padding:5px 10px;background:var(--card)"><option value="0">全部一張</option><option value="6">6 列</option><option value="7">7 列</option><option value="8" selected>8 列</option><option value="10">10 列</option></select></label>
       <button class="dl" type="button" id="pngBtn">下載圖片 PNG</button>
       <button class="dl" type="button" id="xlsxBtn">下載 Excel</button>
     </div>
@@ -127,7 +128,7 @@ footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);paddin
       <label class="one">達成率<input id="fRate" maxlength="20" placeholder="73%"></label>
       <label class="full">備註說明<textarea id="fNote" maxlength="2000"></textarea></label>
     </div>
-    <span class="hint">備註小技巧：<b>**粗體**</b>、<u>__底線__</u>，按 Enter 換行。達成率只打數字會自動補 %。</span>
+    <span class="hint">備註小技巧：<b>**粗體**</b>、<u>__底線__</u>、<span style="color:#E0161B">!!紅字!!</span>，按 Enter 換行。達成率只打數字會自動補 %。</span>
     <div class="factions">
       <button type="button" class="del" id="fDel" hidden>刪除這列</button>
       <button type="button" id="fCancel">取消</button>
@@ -149,28 +150,26 @@ const NAME={"青創":"青創基地","社創":"社創基地"};
 let items=[], editing=null;
 let base=(()=>{const u=new URLSearchParams(location.search).get("base");if(u==="社創"||u==="青創")return u;try{return localStorage.getItem("kpi-base")||"青創"}catch(e){return "青創"}})();
 
-/* 備註標記：**粗體** __底線__ 換行 */
-function runs(text){
-  const out=[];const re=/(\*\*[\s\S]+?\*\*|__[\s\S]+?__)/g;let last=0,m;
-  const push=(t,b,u)=>{if(t)out.push({t,b,u})};
-  while((m=re.exec(text))){push(text.slice(last,m.index),false,false);
-    const tok=m[0];const inner=tok.slice(2,-2);
-    if(tok.startsWith("**")){ // 粗體內可再有底線
-      for(const r of runs(inner)) push(r.t,true,r.u);
-    }else{for(const r of runs(inner)) push(r.t,r.b,true)}
+/* 備註標記：**粗體** __底線__ !!紅字!! 換行（可以疊用，例如 **!!紅色粗體!!**） */
+const MARK={"**":"b","__":"u","!!":"r"};
+function runs(text,f={}){
+  const out=[];const re=/(\*\*[\s\S]+?\*\*|__[\s\S]+?__|!![\s\S]+?!!)/g;let last=0,m;
+  const push=t=>{if(t)out.push({t,b:!!f.b,u:!!f.u,r:!!f.r})};
+  while((m=re.exec(text))){push(text.slice(last,m.index));
+    const tok=m[0];out.push(...runs(tok.slice(2,-2),{...f,[MARK[tok.slice(0,2)]]:true}));
     last=m.index+tok.length}
-  push(text.slice(last),false,false);return out;
+  push(text.slice(last));return out;
 }
-const noteHTML=s=>runs(String(s||"")).map(r=>{let h=esc(r.t).replace(/\n/g,"<br>");if(r.u)h=`<u>${h}</u>`;if(r.b)h=`<b>${h}</b>`;return h}).join("");
+const noteHTML=s=>runs(String(s||"")).map(r=>{let h=esc(r.t).replace(/\n/g,"<br>");if(r.u)h=`<u>${h}</u>`;if(r.b)h=`<b>${h}</b>`;if(r.r)h=`<span style="color:#E0161B">${h}</span>`;return h}).join("");
 const rateTxt=s=>{s=String(s||"").trim();return /^\d+(\.\d+)?$/.test(s)?s+"%":s};
 const rateNum=s=>{const m=String(s||"").match(/(\d+(\.\d+)?)\s*%/);return m?Number(m[1]):null};
 const mine=()=>items.filter(t=>t.base===base).sort((a,b)=>a.seq-b.seq||String(a.item).localeCompare(String(b.item)));
 
-function sheetHTML(b,list){
+function sheetHTML(b,list,off=0){
   return `<div class="sheet"><img class="lg" src="${LOGO[b]}" alt="${esc(NAME[b])}">
   <table><colgroup><col style="width:70px"><col style="width:330px"><col style="width:180px"><col style="width:150px"><col></colgroup>
   <thead><tr><th></th><th>重點執行項目</th><th>年度目標</th><th>達成率</th><th>備註說明</th></tr></thead>
-  <tbody>${list.map((t,i)=>`<tr data-id="${esc(t.id)}"><td class="no">${i+1}</td><td class="it">${esc(t.item)}</td><td class="tg">${esc(t.target)}</td><td class="rt">${esc(rateTxt(t.rate))}</td><td class="nt">${noteHTML(t.note)}</td></tr>`).join("")}</tbody></table></div>`;
+  <tbody>${list.map((t,i)=>`<tr data-id="${esc(t.id)}"><td class="no">${off+i+1}</td><td class="it">${esc(t.item)}</td><td class="tg">${esc(t.target)}</td><td class="rt">${esc(rateTxt(t.rate))}</td><td class="nt">${noteHTML(t.note)}</td></tr>`).join("")}</tbody></table></div>`;
 }
 
 function fit(){const box=$("pvin"),pv=box.parentElement;const sh=box.firstElementChild;if(!sh)return;
@@ -185,7 +184,7 @@ function render(){
   fit();
   $("listTitle").textContent=`${NAME[base]}・${list.length} 個項目`;
   $("list").innerHTML=list.length?list.map((t,i)=>{const n=rateNum(rateTxt(t.rate));
-    return `<li class="row"><span class="n">${i+1}</span><div><div class="t">${esc(t.item)}　<span class="r${n!==null&&n<100?" low":""}">${esc(rateTxt(t.rate))}</span></div><div class="m">目標 ${esc(t.target)}｜${esc(String(t.note||"").replace(/\*\*|__/g,"").slice(0,80))}</div></div><button type="button" class="edit" data-edit="${esc(t.id)}">編輯</button></li>`}).join("")
+    return `<li class="row"><span class="n">${i+1}</span><div><div class="t">${esc(t.item)}　<span class="r${n!==null&&n<100?" low":""}">${esc(rateTxt(t.rate))}</span></div><div class="m">目標 ${esc(t.target)}｜${esc(String(t.note||"").replace(/\*\*|__|!!/g,"").slice(0,80))}</div></div><button type="button" class="edit" data-edit="${esc(t.id)}">編輯</button></li>`}).join("")
     :`<li class="row"><span></span><div class="m">還沒有項目，按「＋ 新增項目」。</div><span></span></li>`;
 }
 
@@ -266,12 +265,22 @@ $("pngBtn").addEventListener("click",async()=>{
   const btn=$("pngBtn");btn.disabled=true;setStatus("產生圖片中…");
   try{
     await loadScript("lib/html2canvas.min.js");
-    const host=document.createElement("div");host.style.cssText="position:fixed;left:-20000px;top:0;";host.innerHTML=sheetHTML(base,mine());document.body.appendChild(host);
-    await Promise.all([...host.querySelectorAll("img")].map(im=>im.complete?0:new Promise(r=>{im.onload=im.onerror=r})));
-    if(document.fonts)await document.fonts.ready;
-    const cv=await html2canvas(host.firstElementChild,{scale:1.5,backgroundColor:"#ffffff",logging:false});
-    host.remove();
-    cv.toBlob(b=>{save(b,`${NAME[base]}_KPI達成表_${stamp()}.png`);setStatus("圖片已下載")},"image/png");
+    const all=mine(), per=Number($("perImg").value)||all.length||1;
+    try{localStorage.setItem("kpi-per",$("perImg").value)}catch(e){}
+    const parts=[];for(let i=0;i<Math.max(all.length,1);i+=per)parts.push([i,all.slice(i,i+per)]);
+    for(let k=0;k<parts.length;k++){
+      const [off,list]=parts[k];
+      const host=document.createElement("div");host.style.cssText="position:fixed;left:-20000px;top:0;";host.innerHTML=sheetHTML(base,list,off);document.body.appendChild(host);
+      await Promise.all([...host.querySelectorAll("img")].map(im=>im.complete?0:new Promise(r=>{im.onload=im.onerror=r})));
+      if(document.fonts)await document.fonts.ready;
+      const cv=await html2canvas(host.firstElementChild,{scale:1.5,backgroundColor:"#ffffff",logging:false});
+      host.remove();
+      const blob=await new Promise(r=>cv.toBlob(r,"image/png"));
+      const tag=parts.length>1?`_${off+1}-${off+list.length}`:"";
+      save(blob,`${NAME[base]}_KPI達成表_${stamp()}${tag}.png`);
+      if(k<parts.length-1)await new Promise(r=>setTimeout(r,400));
+    }
+    setStatus(parts.length>1?`已下載 ${parts.length} 張圖片`:"圖片已下載");
   }catch(err){setStatus("圖片產生失敗："+err.message,true)}finally{btn.disabled=false}
 });
 
@@ -294,13 +303,13 @@ $("xlsxBtn").addEventListener("click",async()=>{
       const list=items.filter(t=>t.base===b).sort((x,y)=>x.seq-y.seq);
       list.forEach((t,i)=>{
         const r=ws.getRow(5+i);
-        const rich=runs(String(t.note||"")).map(x=>({text:x.t,font:{name:FONT,size:12,bold:x.b||undefined,underline:x.u||undefined}}));
+        const rich=runs(String(t.note||"")).map(x=>({text:x.t,font:{name:FONT,size:12,bold:x.b||undefined,underline:x.u||undefined,color:x.r?{argb:"FFE0161B"}:undefined}}));
         r.values=[i+1,t.item,t.target,rateTxt(t.rate),rich.length?{richText:rich}:""];
         const fill={type:"pattern",pattern:"solid",fgColor:{argb:i%2?"FFF2F2F4":"FFD6DAEE"}};
         r.eachCell({includeEmpty:true},(c,col)=>{c.fill=fill;c.border={top:white,bottom:white,left:white,right:white};
           if(col<5){c.font={name:FONT,size:col===2?14:12};c.alignment={horizontal:col===1?"left":"center",vertical:"middle",indent:col===1?1:0}}
           else c.alignment={horizontal:"left",vertical:"middle",wrapText:true}});
-        const lines=String(t.note||"").replace(/\*\*|__/g,"").split("\n").reduce((n,l)=>n+Math.max(1,Math.ceil([...l].reduce((w,ch)=>w+(ch.charCodeAt(0)>255?2:1),0)/84)),0);
+        const lines=String(t.note||"").replace(/\*\*|__|!!/g,"").split("\n").reduce((n,l)=>n+Math.max(1,Math.ceil([...l].reduce((w,ch)=>w+(ch.charCodeAt(0)>255?2:1),0)/84)),0);
         r.height=Math.max(28,lines*19+10);
       });
       ws.pageSetup.printArea=`A1:E${4+list.length}`;
@@ -311,6 +320,7 @@ $("xlsxBtn").addEventListener("click",async()=>{
   }catch(err){setStatus("Excel 產生失敗："+err.message,true)}finally{btn.disabled=false}
 });
 
+try{const v=localStorage.getItem("kpi-per");if(v!==null)$("perImg").value=v}catch(e){}
 render();load();
 </script>
 </body>

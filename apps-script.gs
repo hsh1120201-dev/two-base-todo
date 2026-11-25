@@ -142,11 +142,13 @@ function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).se
 /* ===== 月會 KPI 達成表（kpi.html）=====
  * 「KPI」工作表第一次被讀取時會自動建立並匯入初始資料，不用另外執行 setup。
  * 欄位：id, base(社創/青創), seq(排序), item(重點執行項目), target(年度目標), rate(達成率), note(備註說明), updatedAt
- * 備註可用 **粗體**、__底線__。
+ * 備註可用 **粗體**、__底線__、!!紅字!!。
+ * 之後新增到 KPI_SEED 的項目：把 KPI_SEED_VERSION 加 1，下次讀取會自動補進試算表（只補還沒有的 id）。
  */
 const KPI_SHEET = 'KPI';
 const KPI_COLS = ['id','base','seq','item','target','rate','note','updatedAt'];
 const KPI_BASES = ['社創','青創'];
+const KPI_SEED_VERSION = 2;
 
 const KPI_SEED = [
   ["q1","青創",1,"團隊招募","20組團隊","100%","第一期已於3/23辦理進駐18間；第二期於6/18辦理完畢招募1間，第三期於7/23辦理完畢招募3間，計22組。"],
@@ -157,6 +159,13 @@ const KPI_SEED = [
   ["q6","青創",6,"創業資金","200萬","100%","__年度媒合15案以上__，輔導媒合竹縣SBIR及其他競賽/補助案持續追蹤中。**(日日風味所、加減數位、果多文創、恩科、數碼牛、積世達/宜智科技: SITI台北創業補助獲100萬+戰國策全國創新創業競賽冠軍獲8萬+新創千里馬競賽銅獎獲2萬、SBIR獲補助團隊及金額-恩科創新82萬元、承菲智鏈80萬元、加減數位80萬元，計352萬)**"],
   ["q7","青創",7,"團隊健檢","1場","100%","__進駐後45日內辦理__，4/16已核定。"],
   ["q8","青創",8,"業師輔導","30次","73%","進駐團隊或一般青創家輔導紀錄表已累計**22次**，媒合進行中。"],
+  ["q9","青創",9,"基地營運輔導會議","2次","50%","6/29線上辦理完成；下半年度將於11月辦理。"],
+  ["q10","青創",10,"年度主題展覽","6組團隊","100%","已邀請宏力、承菲、加減、數碼牛參與青創基地於3/27辦理之新春交流茶會。"],
+  ["q11","青創",11,"基地影片","1支","0%","主題參展活動精華紀錄影片(1-2分鐘，觸及5000人)：新春茶會+2026 meet Taipei 拍攝"],
+  ["q12","青創",12,"文宣品-海報","400份","100%","招募海報印刷200份完成(1月已寄出)，年度海報印刷200份完成(5月已寄送)。"],
+  ["q13","青創",13,"文宣品-摺頁","1000份","50%","發包印刷500份完成(4月底已核備)，**!!Meet Taipei 印刷500份於11月展期使用!!**。"],
+  ["q14","青創",14,"文宣品-禮品","1000份","100%","__其中100份單價應高於400，7/31前完成採購__\n高於$400_已採購夾式風扇8/14到貨；其他_設計款透明袋採購400個 及 採購名片夾500個8/19到貨。"],
+  ["q15","青創",15,"滿意度調查","500份","86%","活動收取累計70份有效問券＋Meet Taipei展期360份(資料來源:MT回饋表單)，計430份，持續累計中。"],
   ["s1","社創",1,"校園推廣參訪","4場","75%","5/6新竹B區BNI、7/9雲科大青創中心、11/7清大「產業創新與生涯探索課程」，12月上旬再排1場。"],
   ["s2","社創",2,"培力課程場次","15場","93%","已辦14場（含11/10「永續商模」），12月辦第15、16場。"],
   ["s3","社創",3,"培力課程總時數","34小時","91%","累計31小時，再補3小時以上。"],
@@ -190,6 +199,18 @@ function kpiSheet_() {
     const now = new Date().toISOString();
     const rows = KPI_SEED.map(function (r) { return [r[0], r[1], String(r[2]), r[3], r[4], r[5], r[6], now]; });
     sh.getRange(2, 1, rows.length, KPI_COLS.length).setValues(rows);
+    PropertiesService.getScriptProperties().setProperty('KPI_SEED_V', String(KPI_SEED_VERSION));
+  } else {
+    // 補上新版種子資料裡、試算表還沒有的項目（每個版本只補一次，刪掉的不會再跑回來）
+    const props = PropertiesService.getScriptProperties();
+    if (Number(props.getProperty('KPI_SEED_V') || 1) < KPI_SEED_VERSION) {
+      const have = sh.getRange(1, 1, Math.max(sh.getLastRow(), 1), 1).getDisplayValues().map(function (r) { return r[0]; });
+      const now = new Date().toISOString();
+      const add = KPI_SEED.filter(function (r) { return have.indexOf(r[0]) < 0; })
+        .map(function (r) { return [r[0], r[1], String(r[2]), r[3], r[4], r[5], r[6], now]; });
+      if (add.length) sh.getRange(sh.getLastRow() + 1, 1, add.length, KPI_COLS.length).setNumberFormat('@').setValues(add);
+      props.setProperty('KPI_SEED_V', String(KPI_SEED_VERSION));
+    }
   }
   return sh;
 }
